@@ -81,16 +81,35 @@ export const Navbar1 = () => {
              Desktop (md+) = wider translucent floating pill with menu items + CTA. */
           className={cn(
             "pointer-events-auto flex items-center justify-between rounded-full border transition-all duration-500 ease-out",
-            "w-auto gap-3 pl-5 pr-[7px] py-[7px]",
+            "w-auto gap-3 pl-[7px] pr-[7px] py-[7px]",
             "md:w-full md:max-w-[740px] md:gap-3 md:pl-4 md:pr-[7px] md:py-[7px]",
             scrolled
               ? "bg-black/92 md:bg-[rgba(10,10,10,0.78)] backdrop-blur-xl border-white/[0.08] md:border-white/[0.10] shadow-[0_14px_40px_-14px_rgba(0,0,0,0.65)] md:shadow-[0_20px_60px_-20px_rgba(0,0,0,0.55)]"
               : "bg-black/90 md:bg-[rgba(10,10,10,0.55)] backdrop-blur-xl md:backdrop-blur-md border-white/[0.06] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.55)] md:shadow-none"
           )}
         >
-          {/* Mobile-only invisible spacer — balances the menu button on the right
-              so the wordmark sits visually centered inside the dynamic-island pill. */}
-          <span aria-hidden className="md:hidden block w-10 h-10 shrink-0" />
+          {/* Mobile-only Rabi avatar — small portrait on the left of the
+              Dynamic Island pill. Also acts as a "scroll to top" anchor.
+              Balances the menu button on the right so the wordmark stays
+              visually centered. */}
+          <a
+            href="#top"
+            aria-label="Rabi Adli — scroll naar boven"
+            className="md:hidden flex items-center justify-center w-10 h-10 shrink-0 rounded-full overflow-hidden border border-white/[0.10] bg-card transition-opacity duration-300 hover:opacity-[0.85]"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/rabi-portrait.jpg"
+              alt="Rabi Adli"
+              width={40}
+              height={40}
+              draggable={false}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).style.opacity = "0";
+              }}
+            />
+          </a>
 
           {/* Wordmark logo with subtle accent dot */}
           <a
