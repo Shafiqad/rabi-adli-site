@@ -29,6 +29,10 @@ interface Bedrijf {
   href: string;
   /** Optional logo (white-on-transparent). Drop in /public/images/. */
   logo: string;
+  /** Live site screenshot — drop in /public/images/brands/. */
+  screenshot: string;
+  /** Hostname displayed under the screenshot frame. */
+  domain: string;
   /** RGB triplet for subtle brand-tinted gradient. */
   accentRgb: string;
   /** CTA label for this brand. */
@@ -45,6 +49,8 @@ const BEDRIJVEN: Bedrijf[] = [
     focus: ["Vermogen", "Strategie", "Lange termijn"],
     href: "https://compoundquadrant.nl/",
     logo: "/images/compound-quadrant-logo.svg",
+    screenshot: "/images/brands/compound-quadrant.jpg",
+    domain: "compoundquadrant.nl",
     accentRgb: "200,70,70",
     cta: "Ontdek Compound Quadrant",
   },
@@ -57,6 +63,8 @@ const BEDRIJVEN: Bedrijf[] = [
     focus: ["Boekhouding", "Fiscaliteit", "Control"],
     href: "https://geldinstituut.nl/",
     logo: "/images/geldinstituut-logo.svg",
+    screenshot: "/images/brands/geldinstituut.jpg",
+    domain: "geldinstituut.nl",
     accentRgb: "184,58,58",
     cta: "Bekijk Geldinstituut",
   },
@@ -69,6 +77,8 @@ const BEDRIJVEN: Bedrijf[] = [
     focus: ["Holding", "Estate", "Private"],
     href: "https://www.vosgoldberg.nl/",
     logo: "/images/vosgoldberg-logo.svg",
+    screenshot: "/images/brands/vosgoldberg.jpg",
+    domain: "vosgoldberg.nl",
     accentRgb: "170,50,60",
     cta: "Bekijk Vosgoldberg",
   },
@@ -81,6 +91,8 @@ const BEDRIJVEN: Bedrijf[] = [
     focus: ["Members", "Visie", "Systeem"],
     href: "https://moneyfesto.nl/",
     logo: "/images/moneyfesto-logo.svg",
+    screenshot: "/images/brands/moneyfesto.jpg",
+    domain: "moneyfesto.nl",
     accentRgb: "212,88,88",
     cta: "Ontdek Moneyfesto",
   },
@@ -167,45 +179,91 @@ export function Bedrijven() {
               transition={{ duration: 0.55, ease: EASE }}
               className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-stretch"
             >
-              {/* Visual / logo card */}
+              {/* Visual — live website preview frame */}
               <div className="lg:col-span-5">
-                <div
-                  className="relative h-[300px] md:h-[400px] lg:h-full min-h-[320px] rounded-[22px] overflow-hidden border border-white/[0.08]"
-                  style={{
-                    background: `radial-gradient(120% 80% at 50% 0%, rgba(${active.accentRgb},0.20), transparent 70%), linear-gradient(160deg, #181818 0%, #0a0a0a 60%, #050505 100%)`,
-                  }}
+                <a
+                  href={active.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Open ${active.name} in nieuw tabblad`}
+                  className="group relative block h-[320px] md:h-[440px] lg:h-full min-h-[360px] rounded-[22px] overflow-hidden border border-white/[0.10] bg-card shadow-[0_30px_80px_-25px_rgba(0,0,0,0.65)]"
                 >
-                  {/* Top label */}
-                  <div className="absolute top-5 left-5 right-5 flex items-center justify-between text-[10px] tracking-[0.32em] uppercase">
-                    <span style={{ color: `rgba(${active.accentRgb},0.85)` }}>
-                      {active.label}
+                  {/* Brand-tinted accent glow behind the frame */}
+                  <div
+                    aria-hidden
+                    className="absolute -inset-12 -z-10 pointer-events-none opacity-70"
+                    style={{
+                      background: `radial-gradient(60% 50% at 50% 30%, rgba(${active.accentRgb},0.22), transparent 70%)`,
+                      filter: "blur(50px)",
+                    }}
+                  />
+
+                  {/* Browser chrome */}
+                  <div className="absolute top-0 inset-x-0 z-20 flex items-center gap-2 px-4 py-3 bg-[rgba(10,10,10,0.85)] backdrop-blur-md border-b border-white/[0.06]">
+                    <span className="block w-2.5 h-2.5 rounded-full bg-white/[0.16]" />
+                    <span className="block w-2.5 h-2.5 rounded-full bg-white/[0.12]" />
+                    <span className="block w-2.5 h-2.5 rounded-full bg-white/[0.08]" />
+                    <span className="ml-3 flex-1 text-[10.5px] tracking-[0.18em] font-mono text-foreground/55 truncate">
+                      {active.domain}
                     </span>
-                    <span className="text-subtle-foreground">
-                      {String(
-                        BEDRIJVEN.findIndex((b) => b.id === active.id) + 1
-                      ).padStart(2, "0")}
-                      {" "}
-                      / 0{BEDRIJVEN.length}
-                    </span>
+                    <ArrowUpRight className="h-3.5 w-3.5 text-foreground/45 group-hover:text-foreground group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-all duration-500" />
                   </div>
 
-                  {/* Brand mark — wordmark + optional logo */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center gap-5">
-                    <BrandLogo logo={active.logo} name={active.name} />
-                    <span
-                      className="font-serif leading-none"
-                      style={{
-                        fontSize: "clamp(32px, 4vw, 48px)",
-                        color: `rgba(${active.accentRgb},0.85)`,
-                        letterSpacing: "-0.01em",
-                      }}
-                    >
-                      {active.name}
-                    </span>
+                  {/* Live screenshot */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={active.screenshot}
+                    alt={`${active.name} — homepage screenshot`}
+                    loading="lazy"
+                    draggable={false}
+                    className="absolute inset-0 w-full h-full object-cover object-top transition-transform duration-[1.2s] ease-out group-hover:scale-[1.04]"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).style.opacity = "0";
+                    }}
+                  />
+
+                  {/* Brand tint wash on top of screenshot */}
+                  <div
+                    aria-hidden
+                    className="absolute inset-0 pointer-events-none mix-blend-multiply opacity-40 group-hover:opacity-20 transition-opacity duration-700"
+                    style={{
+                      background: `linear-gradient(180deg, rgba(${active.accentRgb},0.0) 0%, rgba(${active.accentRgb},0.35) 60%, rgba(${active.accentRgb},0.55) 100%)`,
+                    }}
+                  />
+
+                  {/* Bottom info strip */}
+                  <div className="absolute bottom-0 inset-x-0 z-20 px-5 py-4 bg-gradient-to-t from-[rgba(5,5,5,0.92)] via-[rgba(5,5,5,0.6)] to-transparent">
+                    <div className="flex items-end justify-between gap-4">
+                      <div>
+                        <div
+                          className="text-[10px] tracking-[0.32em] uppercase font-medium"
+                          style={{ color: `rgba(${active.accentRgb},0.95)` }}
+                        >
+                          {active.label}
+                        </div>
+                        <div className="mt-1.5 font-serif text-[20px] md:text-[22px] leading-none text-foreground">
+                          {active.name}
+                        </div>
+                      </div>
+                      <span className="text-[10px] tracking-[0.32em] uppercase text-subtle-foreground whitespace-nowrap">
+                        {String(
+                          BEDRIJVEN.findIndex((b) => b.id === active.id) + 1
+                        ).padStart(2, "0")}
+                        {" / 0"}
+                        {BEDRIJVEN.length}
+                      </span>
+                    </div>
                   </div>
 
-                  <ArrowUpRight className="absolute bottom-5 right-5 h-5 w-5 text-foreground/60" />
-                </div>
+                  {/* Outer ring on hover */}
+                  <div
+                    aria-hidden
+                    className="absolute inset-0 rounded-[inherit] pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-700"
+                    style={{
+                      boxShadow: `0 0 0 1px rgba(${active.accentRgb},0.35)`,
+                    }}
+                  />
+                </a>
               </div>
 
               {/* Copy panel */}
@@ -264,27 +322,3 @@ export function Bedrijven() {
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/*  BrandLogo — image with graceful fallback                                   */
-/* -------------------------------------------------------------------------- */
-
-function BrandLogo({ logo, name }: { logo: string; name: string }) {
-  const [failed, setFailed] = React.useState(false);
-
-  React.useEffect(() => {
-    setFailed(false);
-  }, [logo]);
-
-  if (failed) return null;
-
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={logo}
-      alt={`${name} logo`}
-      onError={() => setFailed(true)}
-      className="h-12 md:h-14 w-auto object-contain opacity-90 select-none"
-      draggable={false}
-    />
-  );
-}

@@ -367,14 +367,14 @@ export function LifeTimeline() {
         </div>
       </section>
 
-      {/* ----- Mobile: sticky-stack scroll ----- */}
+      {/* ----- Mobile: tilted photo gallery (cards replace each other on scroll) ----- */}
       <section
         id="reis-mobile"
         className="md:hidden relative bg-background py-24"
         aria-label="De reis achter de visie"
       >
         {/* Header */}
-        <div className="px-6 mb-16">
+        <div className="px-6 mb-12">
           <Reveal>
             <div className="flex items-center gap-4 mb-10">
               <span className="h-px w-10 bg-foreground/20" />
@@ -395,23 +395,17 @@ export function LifeTimeline() {
           </Reveal>
         </div>
 
-        {/* Sticky stack */}
-        <div className="px-6 max-w-[640px] mx-auto">
+        {/* Tilted polaroid-style photo gallery — each chapter gets its own scroll-page */}
+        <div className="px-6 space-y-[14vh] pb-[6vh]">
           {ITEMS.map((item, i) => (
-            <div
-              key={item.n}
-              className="sticky top-[12vh] mb-[12vh] last:mb-0"
-              style={{ zIndex: i + 1 }}
-            >
-              <StackCard item={item} index={i} />
-            </div>
+            <Reveal key={item.n}>
+              <GalleryCard item={item} index={i} />
+            </Reveal>
           ))}
-          {/* Tail spacer so the final card lingers before the next section */}
-          <div className="h-[26vh]" aria-hidden />
         </div>
 
         {/* Caption strip */}
-        <div className="mt-10 px-6 flex items-center justify-between text-[10px] tracking-[0.32em] uppercase text-subtle-foreground">
+        <div className="mt-12 px-6 flex items-center justify-between text-[10px] tracking-[0.32em] uppercase text-subtle-foreground">
           <span>Hoofdstuk 01 — {TOTAL}</span>
           <span>{TOTAL} fragmenten</span>
         </div>
@@ -421,12 +415,36 @@ export function LifeTimeline() {
 }
 
 /* -------------------------------------------------------------------------- */
-/*  StackCard — single tile in the mobile sticky-stack                         */
+/*  GalleryCard — polaroid-feel tile, slight per-card tilt for editorial vibe  */
 /* -------------------------------------------------------------------------- */
 
-function StackCard({ item, index }: { item: TimelineItem; index: number }) {
+// Hand-tuned tilts so the column feels intentional, not random.
+// First and last cards stay straight (anchor moments — Geboorte & Nu).
+const TILTS = [
+  0,    // 01 Geboorte — straight (anchor)
+  1.6,  // 02
+  -2.1, // 03
+  1.2,  // 04
+  -1.4, // 05
+  1.9,  // 06
+  -2.3, // 07
+  1.5,  // 08
+  -1.8, // 09
+  2.1,  // 10
+  -1.6, // 11
+  1.3,  // 12
+  -2.0, // 13
+  1.8,  // 14
+  0,    // 15 Nu — straight (anchor)
+];
+
+function GalleryCard({ item, index }: { item: TimelineItem; index: number }) {
+  const tilt = TILTS[index] ?? 0;
   return (
-    <article className="relative w-full aspect-[4/5] rounded-[24px] overflow-hidden border border-white/[0.08] bg-card shadow-[0_30px_80px_-25px_rgba(0,0,0,0.9)]">
+    <article
+      className="relative w-full aspect-[4/5] rounded-[24px] overflow-hidden border border-white/[0.08] bg-card shadow-[0_30px_80px_-25px_rgba(0,0,0,0.9)] transition-transform duration-700 ease-out"
+      style={{ transform: `rotate(${tilt}deg)` }}
+    >
       {/* Placeholder gradient */}
       <div
         aria-hidden
