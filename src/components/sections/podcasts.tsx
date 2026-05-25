@@ -21,34 +21,48 @@ interface Podcast {
 
 const PODCASTS: Podcast[] = [
   {
-    show: "De Relaxte Ondernemer",
+    show: "Marcel Melis",
+    episode: "Van €0 naar miljonair zonder eigen geld",
+    date: "YouTube",
+    cover: "/images/media/yt-marcel-melis.jpg",
+    href: "https://www.youtube.com/watch?v=cqIKDuOGAI0",
+  },
+  {
+    show: "Toine Manders",
+    episode: "Het beste land om minder belasting te betalen",
+    date: "YouTube",
+    cover: "/images/media/yt-toine-manders.jpg",
+    href: "https://www.youtube.com/watch?v=gUB19uyRlLM",
+  },
+  {
+    show: "Salar Azimi",
     episode:
-      "Rabi Adli te gast — financieel ondernemen & belastingoptimalisatie (afl. 37)",
-    date: "2024",
-    cover: "/images/media/relaxte-ondernemer.jpg",
-    href: "https://relaxteondernemer.podbean.com/",
+      "Anti-witwasanalist vs multimiljonair: zo wordt jouw geld tegen je gebruikt!",
+    date: "YouTube",
+    cover: "/images/media/yt-salar-azimi.jpg",
+    href: "https://www.youtube.com/watch?v=X0qjyQdD_KE",
   },
   {
-    show: "NPO Radio 1 — De Nacht is Zwart",
+    show: "Wybren van Haga",
+    episode: "Nederland is op weg naar de ondergang!",
+    date: "YouTube",
+    cover: "/images/media/yt-wybren-van-haga.jpg",
+    href: "https://www.youtube.com/watch?v=sil7kY4x_pE",
+  },
+  {
+    show: "Rob Heilbron",
     episode:
-      "Rabi Adli over schijnzelfstandigheid vanaf 2025: \"Er is nog te veel onduidelijk\"",
-    date: "September 2024",
-    cover: "/images/media/npo-radio-1.png",
-    href: "https://www.nporadio1.nl/fragmenten/de-nacht-is-zwart/9d12b4fd-3b4a-4990-a3a0-3615c9dfd88f/2024-09-22-financieel-expert-rabi-adli-over-aanpak-schijnzelfstandigheid-vanaf-2025-er-is-nog-te-veel-onduidelijk",
+      "Hoe ik een lingerie-imperium bouwde met confrontatie-marketing",
+    date: "YouTube",
+    cover: "/images/media/yt-rob-heilbron.jpg",
+    href: "https://www.youtube.com/watch?v=4Y2CwPZlf8k",
   },
   {
-    show: "FunX — The Block Den Haag",
-    episode: "Moet je echt contant geld gaan pinnen vanwege oorlog?",
-    date: "December 2024",
-    cover: "/images/media/funx.png",
-    href: "https://www.funx.nl/fragmenten/the-block-den-haag-/9dbd9cac-c9dd-4747-9820-ae722d6f52d0/2024-12-16-moet-je-echt-contant-geld-gaan-pinnen-vanwege-oorlog",
-  },
-  {
-    show: "FunX — Start met Fernando",
-    episode: "Financieel expert waarschuwt voor scam rond iDEAL en Wero",
-    date: "Maart 2026",
-    cover: "/images/media/funx.png",
-    href: "https://www.funx.nl/fragmenten/start-met-fernando/019ce62f-20a9-73ad-a818-4014a9248c7d/2026-03-13-financiee",
+    show: "Hans Vijlbrief",
+    episode: "Minister Hans Vijlbrief: 'EXIT TAX is geen goed idee.'",
+    date: "YouTube",
+    cover: "/images/media/yt-hans-vijlbrief.jpg",
+    href: "https://www.youtube.com/watch?v=TeJnkTVsv5U",
   },
 ];
 
