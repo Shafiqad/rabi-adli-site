@@ -96,7 +96,7 @@ export const Navbar1 = () => {
           >
             <span
               aria-hidden
-              className="block h-1 w-1 rounded-full bg-accent/65 shadow-[0_0_6px_rgba(191,164,106,0.5)]"
+              className="block h-1 w-1 rounded-full bg-accent/65 shadow-[0_0_6px_rgba(184, 58, 58,0.5)]"
             />
             <SignatureLogo
               width={160}
@@ -145,7 +145,7 @@ export const Navbar1 = () => {
                           animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0, scale: 0.4 }}
                           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                          className="w-[5px] h-[5px] rounded-full bg-accent shadow-[0_0_10px_rgba(191,164,106,0.55)]"
+                          className="w-[5px] h-[5px] rounded-full bg-accent shadow-[0_0_10px_rgba(184, 58, 58,0.55)]"
                         />
                       )}
                     </AnimatePresence>
@@ -252,7 +252,7 @@ export const Navbar1 = () => {
                           {item.label}
                         </span>
                         {isActive && (
-                          <span className="w-1.5 h-1.5 rounded-full bg-accent shadow-[0_0_10px_rgba(191,164,106,0.55)]" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-accent shadow-[0_0_10px_rgba(184, 58, 58,0.55)]" />
                         )}
                       </span>
                       <span className="text-[10px] tracking-[0.32em] uppercase text-subtle-foreground">

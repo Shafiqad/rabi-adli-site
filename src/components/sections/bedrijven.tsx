@@ -45,7 +45,7 @@ const BEDRIJVEN: Bedrijf[] = [
     focus: ["Vermogen", "Strategie", "Lange termijn"],
     href: "#",
     logo: "/images/compound-quadrant-logo.svg",
-    accentRgb: "212,180,130",
+    accentRgb: "200,70,70",
     cta: "Ontdek Compound Quadrant",
   },
   {
@@ -57,7 +57,7 @@ const BEDRIJVEN: Bedrijf[] = [
     focus: ["Boekhouding", "Fiscaliteit", "Control"],
     href: "#",
     logo: "/images/geldinstituut-logo.svg",
-    accentRgb: "191,164,106",
+    accentRgb: "184,58,58",
     cta: "Bekijk Geldinstituut",
   },
   {
@@ -69,7 +69,7 @@ const BEDRIJVEN: Bedrijf[] = [
     focus: ["Holding", "Estate", "Private"],
     href: "#",
     logo: "/images/vosgoldberg-logo.svg",
-    accentRgb: "200,170,120",
+    accentRgb: "170,50,60",
     cta: "Bekijk Vosgoldberg",
   },
   {
@@ -81,7 +81,7 @@ const BEDRIJVEN: Bedrijf[] = [
     focus: ["Members", "Visie", "Systeem"],
     href: "#",
     logo: "/images/moneyfesto-logo.svg",
-    accentRgb: "230,210,170",
+    accentRgb: "212,88,88",
     cta: "Ontdek Moneyfesto",
   },
   {
@@ -93,7 +93,7 @@ const BEDRIJVEN: Bedrijf[] = [
     focus: ["Branding", "Positionering", "Content"],
     href: "#",
     logo: "/images/brandaura-logo.svg",
-    accentRgb: "220,195,150",
+    accentRgb: "195,75,75",
     cta: "Bekijk Brandaura",
   },
 ];

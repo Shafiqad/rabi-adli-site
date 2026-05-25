@@ -86,7 +86,7 @@ export function GlobalCursor() {
       <motion.span
         animate={{ scale: hover ? 2.2 : 1 }}
         transition={{ type: "spring", stiffness: 320, damping: 22 }}
-        className="block h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent shadow-[0_0_14px_rgba(191,164,106,0.75)]"
+        className="block h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent shadow-[0_0_14px_rgba(184, 58, 58,0.75)]"
         style={{ mixBlendMode: "screen" }}
       />
       <motion.span

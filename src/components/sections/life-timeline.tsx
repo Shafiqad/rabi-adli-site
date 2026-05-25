@@ -302,7 +302,7 @@ function TimelineCard({
         <div className="absolute inset-0 rounded-[inherit] pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-700"
           style={{
             boxShadow:
-              "0 30px 90px -20px rgba(0,0,0,0.85), 0 0 0 1px rgba(191,164,106,0.08)",
+              "0 30px 90px -20px rgba(0,0,0,0.85), 0 0 0 1px rgba(184, 58, 58,0.08)",
           }}
         />
       </div>

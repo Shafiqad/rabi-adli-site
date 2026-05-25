@@ -15,7 +15,7 @@ export function Contact() {
             className="absolute inset-0 pointer-events-none"
             style={{
               background:
-                "radial-gradient(ellipse 60% 60% at 80% 20%, rgba(191,164,106,0.08), transparent 70%)",
+                "radial-gradient(ellipse 60% 60% at 80% 20%, rgba(184, 58, 58,0.08), transparent 70%)",
             }}
           />
           {/* Corner brackets */}

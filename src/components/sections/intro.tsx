@@ -96,7 +96,7 @@ export function Intro() {
           className="absolute inset-0 -z-10 pointer-events-none"
           style={{
             background:
-              "radial-gradient(40% 70% at 50% 50%, rgba(191,164,106,0.08), transparent 70%)",
+              "radial-gradient(40% 70% at 50% 50%, rgba(184, 58, 58,0.08), transparent 70%)",
             filter: "blur(60px)",
           }}
         />

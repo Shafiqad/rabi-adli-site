@@ -284,7 +284,7 @@ function CarouselCard({
           transition={{ duration: 0.5, delay: 0.15, ease: EASE }}
           className="absolute inset-0 flex items-center justify-center pointer-events-none"
         >
-          <span className="relative flex items-center justify-center h-16 w-16 md:h-20 md:w-20 rounded-full bg-accent text-background shadow-[0_20px_60px_-10px_rgba(191,164,106,0.55)]">
+          <span className="relative flex items-center justify-center h-16 w-16 md:h-20 md:w-20 rounded-full bg-accent text-background shadow-[0_20px_60px_-10px_rgba(184, 58, 58,0.55)]">
             <Play
               className="h-6 w-6 md:h-7 md:w-7 translate-x-[2px]"
               fill="currentColor"

@@ -137,7 +137,7 @@ export function NewsArticles() {
         className="absolute inset-0 -z-0 pointer-events-none"
         style={{
           background:
-            "radial-gradient(60% 60% at 50% 0%, rgba(191,164,106,0.05), transparent 70%)",
+            "radial-gradient(60% 60% at 50% 0%, rgba(184, 58, 58,0.05), transparent 70%)",
         }}
       />
 

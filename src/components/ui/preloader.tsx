@@ -77,7 +77,7 @@ export function Preloader() {
             className="absolute inset-0 pointer-events-none"
             style={{
               background:
-                "radial-gradient(60% 60% at 50% 50%, rgba(191,164,106,0.10), transparent 70%)",
+                "radial-gradient(60% 60% at 50% 50%, rgba(184, 58, 58,0.10), transparent 70%)",
             }}
           />
           <div
@@ -145,7 +145,7 @@ export function Preloader() {
               {/* Pen-tip dot — follows the leading edge, fades out at 100% */}
               <span
                 aria-hidden
-                className="absolute top-1/2 h-2.5 w-2.5 rounded-full bg-accent shadow-[0_0_14px_rgba(191,164,106,0.8)] transition-opacity duration-500"
+                className="absolute top-1/2 h-2.5 w-2.5 rounded-full bg-accent shadow-[0_0_14px_rgba(184, 58, 58,0.8)] transition-opacity duration-500"
                 style={{
                   left: `${reveal}%`,
                   transform: "translate(-50%, -50%)",
@@ -160,7 +160,7 @@ export function Preloader() {
                 className="h-full bg-accent"
                 style={{
                   width: `${reveal}%`,
-                  boxShadow: "0 0 10px rgba(191,164,106,0.6)",
+                  boxShadow: "0 0 10px rgba(184, 58, 58,0.6)",
                 }}
               />
             </div>

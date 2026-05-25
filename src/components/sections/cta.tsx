@@ -12,7 +12,7 @@ export function CtaSection() {
           className="relative overflow-hidden rounded-[28px] md:rounded-[40px] border border-white/[0.08] px-6 md:px-16 py-20 md:py-28 text-center"
           style={{
             background:
-              "radial-gradient(80% 80% at 50% 0%, rgba(191,164,106,0.12), transparent 60%), linear-gradient(180deg, #0d0d0d 0%, #050505 100%)",
+              "radial-gradient(80% 80% at 50% 0%, rgba(184, 58, 58,0.12), transparent 60%), linear-gradient(180deg, #0d0d0d 0%, #050505 100%)",
           }}
         >
           {/* Subtle grid texture */}

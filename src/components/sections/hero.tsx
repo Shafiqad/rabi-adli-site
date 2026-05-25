@@ -69,7 +69,7 @@ export function Hero() {
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse 70% 60% at 75% 35%, rgba(191,164,106,0.13), transparent 65%), radial-gradient(ellipse 55% 50% at 12% 80%, rgba(191,164,106,0.06), transparent 65%), radial-gradient(ellipse 50% 40% at 50% 115%, rgba(245,245,240,0.04), transparent 70%)",
+              "radial-gradient(ellipse 70% 60% at 75% 35%, rgba(184, 58, 58,0.13), transparent 65%), radial-gradient(ellipse 55% 50% at 12% 80%, rgba(184, 58, 58,0.06), transparent 65%), radial-gradient(ellipse 50% 40% at 50% 115%, rgba(245,245,240,0.04), transparent 70%)",
           }}
         />
 
@@ -79,7 +79,7 @@ export function Hero() {
           className="absolute -right-[20%] top-[8%] w-[720px] h-[720px] rounded-full pointer-events-none"
           style={{
             background:
-              "radial-gradient(closest-side, rgba(191,164,106,0.16), transparent 75%)",
+              "radial-gradient(closest-side, rgba(184, 58, 58,0.16), transparent 75%)",
             filter: "blur(60px)",
           }}
           animate={{ scale: [1, 1.08, 1], opacity: [0.75, 1, 0.75] }}
@@ -260,7 +260,7 @@ export function Hero() {
                 className="absolute -inset-12 -z-10 pointer-events-none"
                 style={{
                   background:
-                    "radial-gradient(60% 60% at 50% 50%, rgba(191,164,106,0.18), transparent 70%)",
+                    "radial-gradient(60% 60% at 50% 50%, rgba(184, 58, 58,0.18), transparent 70%)",
                   filter: "blur(60px)",
                 }}
               />
