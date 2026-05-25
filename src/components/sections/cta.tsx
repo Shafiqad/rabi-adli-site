@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Reveal } from "@/components/reveal";
 import { ShinyButton } from "@/components/ui/shiny-button";
+import { BGPattern } from "@/components/ui/bg-pattern";
 
 export function CtaSection() {
   return (
@@ -15,19 +16,13 @@ export function CtaSection() {
               "radial-gradient(80% 80% at 50% 0%, rgba(184, 58, 58,0.12), transparent 60%), linear-gradient(180deg, #0d0d0d 0%, #050505 100%)",
           }}
         >
-          {/* Subtle grid texture */}
-          <div
-            aria-hidden
-            className="absolute inset-0 opacity-[0.08] pointer-events-none"
-            style={{
-              backgroundImage:
-                "linear-gradient(to right, #ffffff10 1px, transparent 1px), linear-gradient(to bottom, #ffffff10 1px, transparent 1px)",
-              backgroundSize: "80px 80px",
-              maskImage:
-                "radial-gradient(ellipse at center, black 40%, transparent 85%)",
-              WebkitMaskImage:
-                "radial-gradient(ellipse at center, black 40%, transparent 85%)",
-            }}
+          {/* Checkerboard background with fade-top mask */}
+          <BGPattern
+            variant="checkerboard"
+            mask="fade-top"
+            size={28}
+            fill="#1a1a1a"
+            className="pointer-events-none"
           />
 
           {/* Signature watermark in background */}
