@@ -1,0 +1,12 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NPM_FLAGS = "--legacy-peer-deps"
+
+# Netlify auto-installs the Next.js plugin when it detects a Next site,
+# but pinning it here keeps the deploy deterministic.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

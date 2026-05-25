@@ -25,6 +25,8 @@ const highlight =
 type ElementProps = React.HTMLAttributes<HTMLElement> & {
   href?: string;
   type?: "button" | "submit" | "reset";
+  target?: string;
+  rel?: string;
 };
 
 interface HoverBorderGradientProps
