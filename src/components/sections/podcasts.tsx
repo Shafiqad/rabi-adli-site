@@ -14,46 +14,41 @@ import { Reveal } from "@/components/reveal";
 interface Podcast {
   show: string;
   episode: string;
-  guest: string;
+  date: string;
   cover: string;
   href: string;
 }
 
 const PODCASTS: Podcast[] = [
   {
-    show: "The Rabi Adli Podcast",
-    episode: "Er komt een burgeroorlog aan!",
-    guest: "Ab Flipse",
-    cover: "/images/rabi-podcast-01.jpg",
-    href: "#",
+    show: "De Relaxte Ondernemer",
+    episode:
+      "Rabi Adli te gast — financieel ondernemen & belastingoptimalisatie (afl. 37)",
+    date: "2024",
+    cover: "/images/media/relaxte-ondernemer.jpg",
+    href: "https://relaxteondernemer.podbean.com/",
   },
   {
-    show: "The Rabi Adli Podcast",
-    episode: "Dit systeem vreet geld!",
-    guest: "Tom van Lamoen",
-    cover: "/images/rabi-podcast-02.jpg",
-    href: "#",
+    show: "NPO Radio 1 — De Nacht is Zwart",
+    episode:
+      "Rabi Adli over schijnzelfstandigheid vanaf 2025: \"Er is nog te veel onduidelijk\"",
+    date: "September 2024",
+    cover: "/images/media/npo-radio-1.png",
+    href: "https://www.nporadio1.nl/fragmenten/de-nacht-is-zwart/9d12b4fd-3b4a-4990-a3a0-3615c9dfd88f/2024-09-22-financieel-expert-rabi-adli-over-aanpak-schijnzelfstandigheid-vanaf-2025-er-is-nog-te-veel-onduidelijk",
   },
   {
-    show: "The Rabi Adli Podcast",
-    episode: "Ze pakken alles van je af!",
-    guest: "Salah Azimi",
-    cover: "/images/rabi-podcast-03.jpg",
-    href: "#",
+    show: "FunX — The Block Den Haag",
+    episode: "Moet je echt contant geld gaan pinnen vanwege oorlog?",
+    date: "December 2024",
+    cover: "/images/media/funx.png",
+    href: "https://www.funx.nl/fragmenten/the-block-den-haag-/9dbd9cac-c9dd-4747-9820-ae722d6f52d0/2024-12-16-moet-je-echt-contant-geld-gaan-pinnen-vanwege-oorlog",
   },
   {
-    show: "The Rabi Adli Podcast",
-    episode: "De overheid maakt Nederland kapot!",
-    guest: "Wybren van Haga",
-    cover: "/images/rabi-podcast-04.jpg",
-    href: "#",
-  },
-  {
-    show: "The Rabi Adli Podcast",
-    episode: "3 lage tax-landen",
-    guest: "Anonieme expert",
-    cover: "/images/rabi-podcast-05.jpg",
-    href: "#",
+    show: "FunX — Start met Fernando",
+    episode: "Financieel expert waarschuwt voor scam rond iDEAL en Wero",
+    date: "Maart 2026",
+    cover: "/images/media/funx.png",
+    href: "https://www.funx.nl/fragmenten/start-met-fernando/019ce62f-20a9-73ad-a818-4014a9248c7d/2026-03-13-financiee",
   },
 ];
 
@@ -83,12 +78,12 @@ export function Podcasts() {
         <div className="text-center mb-14 md:mb-16">
           <Reveal>
             <span className="text-[11px] tracking-[0.32em] uppercase text-accent font-medium">
-              The Rabi Adli Podcast
+              Podcasts & Radio
             </span>
           </Reveal>
           <Reveal delay={150}>
             <h2 className="mt-5 font-serif text-foreground leading-[1.05] tracking-[-0.018em] text-[clamp(34px,5.2vw,60px)] max-w-3xl mx-auto">
-              Top gasten.{" "}
+              Te gast bij.{" "}
               <span className="display-italic">Echte gesprekken.</span>
             </h2>
           </Reveal>
@@ -169,7 +164,7 @@ export function Podcasts() {
                 transition={{ duration: 0.4, ease: EASE }}
               >
                 <span className="block text-[11px] tracking-[0.32em] uppercase text-subtle-foreground">
-                  Met {PODCASTS[active].guest}
+                  {PODCASTS[active].show} · {PODCASTS[active].date}
                 </span>
                 <a
                   href={PODCASTS[active].href}

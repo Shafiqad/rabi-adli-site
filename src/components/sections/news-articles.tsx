@@ -16,99 +16,50 @@ interface NewsArticle {
   title: string;
   excerpt: string;
   href: string;
-  kind?: "Artikel" | "Interview" | "Radio" | "Podcast" | "Video" | "TV";
+  image?: string;
+  kind?: "Artikel" | "Interview" | "Radio" | "Podcast" | "Video" | "TV" | "Spreker" | "Social";
 }
 
 const ARTICLES: NewsArticle[] = [
   {
-    outlet: "FunX",
-    date: "2024",
-    kind: "Interview",
-    title: "“Geld volgt als je je échte dromen waarmaakt.”",
-    excerpt:
-      "Interview met financieel expert Rabi over geld, dromen en financiële weerbaarheid voor de nieuwe generatie.",
-    href: "https://www.funx.nl/news/funx/dc91d412-84b5-4adb-8e10-1312a9dd2895/financieel-expert-rabi-geld-volgt-als-je-je-echte-dromen-waarmaakt",
-  },
-  {
-    outlet: "WijsDom Podcast",
-    date: "2024",
-    kind: "Podcast",
-    title: "“Niet genoeg geld is een overtuiging — geen feit.”",
-    excerpt:
-      "Een gesprek over geldovertuigingen, ondernemerschap en hoe scherper denken meer oplevert dan harder werken.",
-    href: "https://www.youtube.com/watch?v=D-7RNiqhZdg",
-  },
-  {
-    outlet: "De Geld Specialist",
-    date: "2024",
-    kind: "Video",
-    title: "Het verhaal achter Rabi Adli.",
-    excerpt:
-      "Van financiële wereld naar eigen ecosysteem — de levensloop, keuzes en motieven achter de bedrijven.",
-    href: "https://www.youtube.com/watch?v=qrgyk4fd9lQ",
-  },
-  {
-    outlet: "NPO Radio 1",
-    date: "2025",
-    kind: "Radio",
-    title: "Over geld, vrijheid en het financiële systeem.",
-    excerpt:
-      "Gesprek over hoe ondernemers en jonge generaties scherper naar geld leren kijken — bij NPO Radio 1.",
-    href: "#",
-  },
-  {
-    outlet: "Geldinstituut",
-    date: "2025",
-    kind: "Artikel",
-    title: "Schijnzelfstandigheid — wat verandert er en wat betekent het voor jou?",
-    excerpt:
-      "Een toelichting op de strengere handhaving rondom schijnzelfstandigheid en wat ondernemers nu kunnen doen.",
-    href: "https://www.geldinstituut.nl/",
-  },
-  {
-    outlet: "Lotgenoten Podcast",
-    date: "2024",
-    kind: "Podcast",
-    title: "Bouwen aan financiële autoriteit — visie, missie en methode.",
-    excerpt:
-      "Een uitgebreid gesprek over het opbouwen van platformen, persoonlijk merk en lange-termijn waarde.",
-    href: "#",
-  },
-  {
-    outlet: "AD",
-    date: "2025",
-    kind: "Artikel",
-    title: "De nieuwe generatie financiële denkers in Nederland.",
-    excerpt:
-      "Hoe een jonge ondernemer met een ABN- en Deloitte-achtergrond financieel onderwijs toegankelijk maakt.",
-    href: "#",
-  },
-  {
-    outlet: "NPO 1",
-    date: "2025",
-    kind: "TV",
-    title: "TV-optreden over geld, ondernemerschap en vrijheid.",
-    excerpt:
-      "Te gast op NPO 1 om te praten over financiële educatie en de visie achter Geldinstituut & Moneyfesto.",
-    href: "#",
-  },
-  {
-    outlet: "Het Financieele Dagblad",
-    date: "2025",
-    kind: "Artikel",
-    title: "Ondernemers en hun cijfers — waarom grip belangrijker is dan groei.",
-    excerpt:
-      "Een opiniestuk over financiële structuur als fundament voor duurzame ondernemerssuccessen.",
-    href: "#",
-  },
-  {
-    outlet: "TikTok",
+    outlet: "The Speakers",
     date: "Lopend",
-    kind: "Video",
-    title: "Financiële inzichten in korte video's — wekelijks nieuw.",
+    kind: "Spreker",
+    title: "Consultant en educator die financiële risico's begrijpelijk maakt — 5/5 beoordeeld.",
     excerpt:
-      "Bondige uitleg over geld, belasting en ondernemerschap voor een groeiend publiek van 100K+ volgers.",
-    href: "https://www.tiktok.com/@rabiadli",
+      "Rabi Adli staat op The Speakers als top-rated spreker en financieel educator, met een consistente 5/5 beoordeling van organisatoren en publiek in Nederland.",
+    href: "https://www.thespeakers.nl/sprekers/rabi-adli/",
+    image: "/images/media/speakers.png",
+  },
+  {
+    outlet: "LinkedIn",
+    date: "November 2024",
+    kind: "Social",
+    title: "Rabi Adli — financial insights & updates.",
+    excerpt:
+      "Featured LinkedIn-post die 200K+ volgers bereikte met inzichten over financiële planning en belastingstrategie voor ondernemers.",
+    href: "https://www.linkedin.com/feed/update/urn:li:activity:7261676706514571265/",
+    image: "/images/media/linkedin.png",
+  },
+  {
+    outlet: "De Gelderlander",
+    date: "2024",
+    kind: "Artikel",
+    title: "\"Je geeft je pinpas met je code en dan krijg je €1000\" — Rabi waarschuwt voor geldezel-gevaren.",
+    excerpt:
+      "Gepubliceerd in één van Nederlands grootste regionale kranten. Rabi luidt de noodklok over de opkomst van geldezel-rekrutering onder jongeren.",
+    href: "https://www.gelderlander.nl/binnenland/je-geeft-je-pinpas-met-je-code-en-dan-krijg-je-1000-euro-rabi-waarschuwt-voor-geldezel-gevaren~a5d879dc/239741362/",
+    image: "/images/media/gelderlander.jpg",
+  },
+  {
+    outlet: "Tubantia",
+    date: "2024",
+    kind: "Artikel",
+    title: "\"Je geeft je pinpas met je code en dan krijg je €1000\" — Rabi waarschuwt voor geldezel-gevaren.",
+    excerpt:
+      "Dezelfde onderzoeksrapportage verscheen ook in Tubantia, waardoor Rabi's waarschuwing ook Oost-Nederland bereikte.",
+    href: "https://www.tubantia.nl/binnenland/je-geeft-je-pinpas-met-je-code-en-dan-krijg-je-1000-euro-rabi-waarschuwt-voor-geldezel-gevaren~a5d879dc/239741362/",
+    image: "/images/media/tubantia.jpg",
   },
 ];
 
@@ -210,7 +161,7 @@ export function NewsArticles() {
               delay={Math.min(i * 60, 480)}
               className="snap-start shrink-0 w-[300px] sm:w-[340px] md:w-[400px]"
             >
-              <ArticleCard article={a} index={i} />
+              <ArticleCard article={a} index={i} total={ARTICLES.length} />
             </Reveal>
           ))}
         </div>
@@ -244,9 +195,11 @@ export function NewsArticles() {
 function ArticleCard({
   article,
   index,
+  total,
 }: {
   article: NewsArticle;
   index: number;
+  total: number;
 }) {
   const isExternal = article.href.startsWith("http");
   return (
@@ -254,42 +207,78 @@ function ArticleCard({
       href={article.href}
       target={isExternal ? "_blank" : undefined}
       rel={isExternal ? "noopener noreferrer" : undefined}
-      className="group relative flex h-full min-h-[380px] flex-col justify-between rounded-[22px] p-7 md:p-8 card-premium overflow-hidden"
+      className="group relative flex h-full min-h-[520px] flex-col rounded-[22px] card-premium overflow-hidden"
     >
-      {/* Top accent line — grows on hover */}
-      <span
-        aria-hidden
-        className="absolute top-0 left-7 md:left-8 h-px w-8 bg-accent/40 group-hover:w-24 transition-[width] duration-700"
-      />
+      {/* Cover image */}
+      {article.image && (
+        <div className="relative aspect-[16/10] overflow-hidden border-b border-white/[0.05]">
+          {/* Placeholder gradient */}
+          <div
+            aria-hidden
+            className="absolute inset-0"
+            style={{
+              backgroundImage:
+                "linear-gradient(150deg, #1a1a1a 0%, #0c0c0c 60%, #050505 100%)",
+            }}
+          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={article.image}
+            alt={article.outlet}
+            loading="lazy"
+            draggable={false}
+            className="absolute inset-0 w-full h-full object-cover grayscale brightness-[0.85] contrast-[1.05] transition-[filter,transform] duration-[1.1s] ease-out group-hover:grayscale-0 group-hover:brightness-95 group-hover:scale-[1.04]"
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).style.opacity = "0";
+            }}
+          />
+          <div
+            aria-hidden
+            className="absolute inset-x-0 bottom-0 h-[55%] pointer-events-none"
+            style={{
+              background:
+                "linear-gradient(180deg, transparent 0%, rgba(5,5,5,0.85) 100%)",
+            }}
+          />
+        </div>
+      )}
 
-      <div className="flex items-center justify-between text-[10px] tracking-[0.28em] uppercase">
-        <span className="text-accent/85 group-hover:text-accent transition-colors duration-500 truncate max-w-[60%]">
-          {article.outlet}
-        </span>
-        <span className="text-subtle-foreground whitespace-nowrap">
-          {article.kind ? `${article.kind} · ` : ""}
-          {article.date}
-        </span>
-      </div>
+      <div className="relative flex flex-1 flex-col p-7 md:p-8">
+        {/* Top accent line — grows on hover */}
+        <span
+          aria-hidden
+          className="absolute top-0 left-7 md:left-8 h-px w-8 bg-accent/40 group-hover:w-24 transition-[width] duration-700"
+        />
 
-      <h3 className="mt-8 font-serif text-foreground text-[20px] md:text-[22px] leading-[1.2] tracking-[-0.005em]">
-        {article.title}
-      </h3>
+        <div className="flex items-center justify-between text-[10px] tracking-[0.28em] uppercase">
+          <span className="text-accent/85 group-hover:text-accent transition-colors duration-500 truncate max-w-[60%]">
+            {article.outlet}
+          </span>
+          <span className="text-subtle-foreground whitespace-nowrap">
+            {article.kind ? `${article.kind} · ` : ""}
+            {article.date}
+          </span>
+        </div>
 
-      <p className="mt-5 text-[14px] leading-[1.6] text-muted-foreground line-clamp-3">
-        {article.excerpt}
-      </p>
+        <h3 className="mt-6 font-serif text-foreground text-[19px] md:text-[21px] leading-[1.25] tracking-[-0.005em]">
+          {article.title}
+        </h3>
 
-      <div className="mt-8 pt-6 border-t border-border flex items-center justify-between">
-        <span className="text-[11px] tracking-[0.32em] uppercase text-subtle-foreground">
-          {String(index + 1).padStart(2, "0")}
-          {" / "}
-          {String(10).padStart(2, "0")}
-        </span>
-        <span className="inline-flex items-center gap-2 text-[12px] tracking-[0.005em] text-foreground/80 group-hover:text-accent transition-colors duration-300">
-          Lees artikel
-          <ArrowUpRight className="h-3.5 w-3.5 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform duration-500" />
-        </span>
+        <p className="mt-4 text-[14px] leading-[1.6] text-muted-foreground line-clamp-3">
+          {article.excerpt}
+        </p>
+
+        <div className="mt-auto pt-6 border-t border-border flex items-center justify-between">
+          <span className="text-[11px] tracking-[0.32em] uppercase text-subtle-foreground">
+            {String(index + 1).padStart(2, "0")}
+            {" / "}
+            {String(total).padStart(2, "0")}
+          </span>
+          <span className="inline-flex items-center gap-2 text-[12px] tracking-[0.005em] text-foreground/80 group-hover:text-accent transition-colors duration-300">
+            Lees artikel
+            <ArrowUpRight className="h-3.5 w-3.5 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform duration-500" />
+          </span>
+        </div>
       </div>
     </a>
   );
