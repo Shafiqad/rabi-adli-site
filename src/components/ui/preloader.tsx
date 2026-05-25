@@ -4,32 +4,55 @@ import * as React from "react";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 
-/* easeInOutCubic — natural pen movement (slow start, smooth middle, soft end) */
-const EASE_IN_OUT_CUBIC = (t: number) =>
-  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+/* easeInOutQuart — natural pen motion (gentle approach, confident middle,
+ * soft landing). Closer to how a hand actually draws a signature than a
+ * linear or single-eased reveal would feel.                              */
+const EASE_PEN = (t: number) =>
+  t < 0.5 ? 8 * t * t * t * t : 1 - Math.pow(-2 * t + 2, 4) / 2;
+
+const SIGNATURE_PNG = "/images/logosignature.png";
+
+interface PreloaderProps {
+  /** Skip on subsequent visits within the same browser session. */
+  oncePerSession?: boolean;
+}
 
 /**
- * Signature-drawing preloader.
+ * Premium signature-draw preloader.
  *
- * The wordmark PNG at `/images/logosignature.png` is revealed left → right via
- * an animated CSS mask, simulating a calligraphic stroke being drawn. A small
- * champagne pen-tip follows the leading edge and fades out once the signature
- * is fully drawn. The whole panel then slides up to reveal the page.
+ * The PNG signature at `/images/logosignature.png` is unveiled left → right
+ * via an animated CSS mask with a soft trailing edge — visually identical
+ * to a pen stroking the wordmark across the page. Once the draw completes
+ * a small spaced-out "Rabi Adli" label fades in beneath. The whole panel
+ * then fades softly away to reveal the hero.
  *
- * Respects `prefers-reduced-motion` by collapsing the draw on a fast timeline.
+ * If you later add an actual SVG version of the signature
+ * (`/images/logosignature.svg` with `<path>` elements that have a stroke),
+ * swap the body of this component to render that SVG with a
+ * `stroke-dasharray` + `stroke-dashoffset` animation — the surrounding
+ * choreography (fade-in label, fade-out panel, body-lock) stays identical.
+ *
+ * Respects `prefers-reduced-motion` by collapsing the whole sequence into
+ * a fast snap so motion-sensitive users aren't held up.
  */
-export function Preloader() {
+export function Preloader({ oncePerSession = false }: PreloaderProps) {
   const [visible, setVisible] = useState(true);
-  const [reveal, setReveal] = useState(0); // 0 — 100
+  const [reveal, setReveal] = useState(0);
+  const [signatureDone, setSignatureDone] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    if (oncePerSession && sessionStorage.getItem("rabi-preloader-shown")) {
+      setVisible(false);
+      return;
+    }
+
     const prefersReduced = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches;
-    const duration = prefersReduced ? 400 : 2100;
-    const tailHold = prefersReduced ? 80 : 520;
+    const drawDuration = prefersReduced ? 350 : 2200;
+    const holdAfterDraw = prefersReduced ? 200 : 750;
 
     document.body.style.overflow = "hidden";
 
@@ -38,12 +61,15 @@ export function Preloader() {
 
     const tick = (now: number) => {
       const elapsed = now - startTime;
-      const t = Math.min(1, elapsed / duration);
-      setReveal(EASE_IN_OUT_CUBIC(t) * 100);
+      const t = Math.min(1, elapsed / drawDuration);
+      setReveal(EASE_PEN(t) * 100);
+
       if (t < 1) {
         raf = requestAnimationFrame(tick);
       } else {
-        window.setTimeout(() => setVisible(false), tailHold);
+        setSignatureDone(true);
+        if (oncePerSession) sessionStorage.setItem("rabi-preloader-shown", "1");
+        window.setTimeout(() => setVisible(false), holdAfterDraw);
       }
     };
     raf = requestAnimationFrame(tick);
@@ -51,10 +77,11 @@ export function Preloader() {
     return () => {
       if (raf) cancelAnimationFrame(raf);
     };
-  }, []);
+  }, [oncePerSession]);
 
-  // Mask with a soft 2% trailing edge — feels like wet-ink rather than a hard cut.
-  const maskHead = Math.max(0, reveal - 2);
+  /* Soft 3% trailing edge on the reveal mask — feels like fresh ink
+   * settling rather than a hard wipe.                                  */
+  const maskHead = Math.max(0, reveal - 3);
   const maskImage = `linear-gradient(90deg, #000 0%, #000 ${maskHead}%, transparent ${reveal}%)`;
 
   return (
@@ -66,117 +93,67 @@ export function Preloader() {
       {visible && (
         <motion.div
           aria-hidden
-          initial={{ y: 0 }}
-          exit={{ y: "-100%" }}
-          transition={{ duration: 0.95, ease: [0.83, 0, 0.17, 1] }}
-          className="fixed inset-0 z-[10000] bg-background flex flex-col items-center justify-center overflow-hidden"
+          initial={{ opacity: 1 }}
+          exit={{ opacity: 0, filter: "blur(6px)" }}
+          transition={{ duration: 0.85, ease: [0.42, 0, 0.58, 1] }}
+          className="fixed inset-0 z-[10000] flex flex-col items-center justify-center overflow-hidden"
+          style={{ background: "#050505" }}
         >
-          {/* Background — soft champagne wash + grid */}
+          {/* Subtle film-grain texture */}
           <div
             aria-hidden
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background:
-                "radial-gradient(60% 60% at 50% 50%, rgba(184, 58, 58,0.10), transparent 70%)",
-            }}
-          />
-          <div
-            aria-hidden
-            className="absolute inset-0 opacity-[0.06] pointer-events-none"
+            className="absolute inset-0 pointer-events-none opacity-[0.45] mix-blend-overlay"
             style={{
               backgroundImage:
-                "linear-gradient(to right, #ffffff10 1px, transparent 1px), linear-gradient(to bottom, #ffffff10 1px, transparent 1px)",
-              backgroundSize: "120px 120px",
-              maskImage:
-                "radial-gradient(ellipse 60% 60% at center, black 30%, transparent 85%)",
-              WebkitMaskImage:
-                "radial-gradient(ellipse 60% 60% at center, black 30%, transparent 85%)",
+                "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.88' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.96 0 0 0 0 0.94 0 0 0 0 0.88 0 0 0 0.045 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")",
+              backgroundSize: "220px 220px",
             }}
           />
 
-          {/* ====================== SIGNATURE STAGE ====================== */}
-          <div
-            className="relative w-[min(560px,82vw)]"
-            style={{
-              filter:
-                "drop-shadow(0 18px 36px rgba(0,0,0,0.55)) drop-shadow(0 4px 8px rgba(0,0,0,0.35))",
-            }}
-          >
-            {/* Aspect-locked wrapper — keeps the dot aligned with the image */}
+          {/* Centered stack — signature + label */}
+          <div className="relative flex flex-col items-center">
+            {/* SIGNATURE — drawn left to right via animated mask */}
             <div
-              className="relative w-full"
-              style={{ aspectRatio: "560 / 150" }}
+              className="relative w-[min(340px,80vw)] sm:w-[min(420px,75vw)] md:w-[min(500px,55vw)]"
+              style={{
+                filter: "drop-shadow(0 6px 16px rgba(0,0,0,0.35))",
+              }}
             >
-              {/* Signature PNG with animated reveal mask */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/images/logosignature.png"
-                alt=""
-                draggable={false}
-                className="absolute inset-0 w-full h-full object-contain select-none"
-                style={{
-                  maskImage,
-                  WebkitMaskImage: maskImage,
-                  maskRepeat: "no-repeat",
-                  WebkitMaskRepeat: "no-repeat",
-                }}
-                onError={(e) => {
-                  // PNG missing — graceful fallback to italic serif wordmark.
-                  const img = e.currentTarget as HTMLImageElement;
-                  img.style.display = "none";
-                  img.nextElementSibling?.classList.remove("hidden");
-                }}
-              />
-
-              {/* Fallback wordmark — hidden by default, shown if PNG fails */}
-              <span
-                aria-hidden
-                className="hidden absolute inset-0 flex items-center justify-center font-serif italic text-foreground"
-                style={{
-                  fontSize: "clamp(48px, 8vw, 96px)",
-                  letterSpacing: "0.005em",
-                  maskImage,
-                  WebkitMaskImage: maskImage,
-                }}
-              >
-                Rabi Adli
-              </span>
-
-              {/* Pen-tip dot — follows the leading edge, fades out at 100% */}
-              <span
-                aria-hidden
-                className="absolute top-1/2 h-2.5 w-2.5 rounded-full bg-accent shadow-[0_0_14px_rgba(184, 58, 58,0.8)] transition-opacity duration-500"
-                style={{
-                  left: `${reveal}%`,
-                  transform: "translate(-50%, -50%)",
-                  opacity: reveal >= 99 ? 0 : 1,
-                }}
-              />
-            </div>
-
-            {/* Thin champagne progress hairline directly under the signature */}
-            <div className="mt-10 h-px w-full bg-white/[0.08] overflow-hidden">
               <div
-                className="h-full bg-accent"
-                style={{
-                  width: `${reveal}%`,
-                  boxShadow: "0 0 10px rgba(184, 58, 58,0.6)",
-                }}
-              />
+                className="relative w-full"
+                style={{ aspectRatio: "1536 / 1024" }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={SIGNATURE_PNG}
+                  alt=""
+                  draggable={false}
+                  className="absolute inset-0 w-full h-full object-contain select-none"
+                  style={{
+                    maskImage,
+                    WebkitMaskImage: maskImage,
+                    maskRepeat: "no-repeat",
+                    WebkitMaskRepeat: "no-repeat",
+                  }}
+                />
+              </div>
             </div>
-          </div>
 
-          {/* Bottom italic tagline */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1.1, delay: 0.45, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute bottom-12 left-1/2 -translate-x-1/2 font-serif italic text-[15px] md:text-[16px] text-foreground/55 tracking-tight whitespace-nowrap"
-          >
-            Geld<span className="text-accent">.</span>{" "}
-            Controle<span className="text-accent">.</span>{" "}
-            Vrijheid<span className="text-accent">.</span>
-          </motion.div>
+            {/* Subtle "RABI ADLI" label — fades in only after signature
+                is fully drawn, then sits quietly during the hold.       */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{
+                opacity: signatureDone ? 1 : 0,
+                y: signatureDone ? 0 : 10,
+              }}
+              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+              className="mt-8 md:mt-10 text-[10px] md:text-[11px] tracking-[0.45em] uppercase font-medium"
+              style={{ color: "#A8A8A8" }}
+            >
+              Rabi Adli
+            </motion.div>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>
