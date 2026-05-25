@@ -7,10 +7,10 @@ import { BGPattern } from "@/components/ui/bg-pattern";
 
 export function CtaSection() {
   return (
-    <section className="relative px-4 md:px-6 py-20 md:py-32">
-      <div className="mx-auto max-w-6xl">
+    <section className="relative px-4 md:px-6 py-16 md:py-24">
+      <div className="mx-auto max-w-5xl">
         <div
-          className="relative overflow-hidden rounded-[28px] md:rounded-[40px] border border-white/[0.08] px-6 md:px-16 py-20 md:py-28 text-center"
+          className="relative overflow-hidden rounded-[28px] md:rounded-[36px] border border-white/[0.08] px-6 md:px-14 py-16 md:py-20 text-center"
           style={{
             background:
               "radial-gradient(80% 80% at 50% 0%, rgba(184, 58, 58,0.12), transparent 60%), linear-gradient(180deg, #0d0d0d 0%, #050505 100%)",
@@ -57,14 +57,14 @@ export function CtaSection() {
             </Reveal>
 
             <Reveal delay={150}>
-              <h2 className="mt-6 font-serif text-foreground leading-[1.05] tracking-[-0.018em] text-[clamp(34px,5.2vw,64px)] max-w-3xl mx-auto">
+              <h2 className="mt-5 font-serif text-foreground leading-[1.05] tracking-[-0.018em] text-[clamp(28px,4.2vw,48px)] max-w-2xl mx-auto">
                 Benieuwd naar de business{" "}
                 <span className="display-italic">achter Rabi Adli?</span>
               </h2>
             </Reveal>
 
             <Reveal delay={300}>
-              <p className="mt-8 text-[15px] md:text-[17px] leading-[1.7] text-muted-foreground max-w-2xl mx-auto">
+              <p className="mt-7 text-[14px] md:text-[16px] leading-[1.65] text-muted-foreground max-w-xl mx-auto">
                 Ontdek de platformen, samenwerkingen en ideeën die gebouwd
                 zijn rondom geld, controle, ondernemerschap en vrijheid.
                 Niet alleen een verhaal — een ecosysteem in beweging.
@@ -72,16 +72,14 @@ export function CtaSection() {
             </Reveal>
 
             <Reveal delay={460}>
-              <div className="mt-12 flex flex-col sm:flex-row gap-4 sm:gap-5 items-center justify-center">
-                <ShinyButton href="#bedrijven">Bekijk mijn wereld</ShinyButton>
-                <ShinyButton href="mailto:contact@rabiadli.nl">
-                  Neem contact met mij op
-                </ShinyButton>
+              <div className="mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4 items-center justify-center">
+                <ShinyButton href="#reis">Bekijk mijn verhaal</ShinyButton>
+                <ShinyButton href="#bedrijven">Bekijk mijn bedrijven</ShinyButton>
               </div>
             </Reveal>
 
             <Reveal delay={620}>
-              <div className="mt-12 flex items-center justify-center gap-3 text-[10px] tracking-[0.32em] uppercase text-subtle-foreground">
+              <div className="mt-10 flex items-center justify-center gap-3 text-[10px] tracking-[0.32em] uppercase text-subtle-foreground">
                 <span className="block h-px w-8 bg-foreground/20" />
                 <span>Rabi Adli · Amsterdam · NL</span>
                 <span className="block h-px w-8 bg-foreground/20" />
