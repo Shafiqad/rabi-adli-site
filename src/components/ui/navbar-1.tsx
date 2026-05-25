@@ -71,7 +71,7 @@ export const Navbar1 = () => {
 
   return (
     <>
-      <div className="fixed top-3 md:top-5 left-0 right-0 z-50 flex justify-center w-full px-4 pointer-events-none">
+      <div className="fixed top-4 md:top-5 left-0 right-0 z-50 flex justify-center w-full px-4 pointer-events-none">
         <motion.nav
           aria-label="Hoofdmenu"
           initial={{ y: -16, opacity: 0 }}
@@ -81,7 +81,7 @@ export const Navbar1 = () => {
              Desktop (md+) = wider translucent floating pill with menu items + CTA. */
           className={cn(
             "pointer-events-auto flex items-center justify-between rounded-full border transition-all duration-500 ease-out",
-            "w-auto gap-2 pl-3.5 pr-[5px] py-[5px]",
+            "w-auto gap-3 pl-5 pr-[7px] py-[7px]",
             "md:w-full md:max-w-[740px] md:gap-3 md:pl-4 md:pr-[7px] md:py-[7px]",
             scrolled
               ? "bg-black/92 md:bg-[rgba(10,10,10,0.78)] backdrop-blur-xl border-white/[0.08] md:border-white/[0.10] shadow-[0_14px_40px_-14px_rgba(0,0,0,0.65)] md:shadow-[0_20px_60px_-20px_rgba(0,0,0,0.55)]"
@@ -90,7 +90,7 @@ export const Navbar1 = () => {
         >
           {/* Mobile-only invisible spacer — balances the menu button on the right
               so the wordmark sits visually centered inside the dynamic-island pill. */}
-          <span aria-hidden className="md:hidden block w-8 h-8 shrink-0" />
+          <span aria-hidden className="md:hidden block w-10 h-10 shrink-0" />
 
           {/* Wordmark logo with subtle accent dot */}
           <a
@@ -105,7 +105,7 @@ export const Navbar1 = () => {
             <SignatureLogo
               width={220}
               height={58}
-              className="text-foreground text-[18px] md:text-[26px] h-[34px] md:h-[44px] w-auto"
+              className="text-foreground text-[20px] md:text-[26px] h-[42px] md:h-[44px] w-auto"
             />
           </a>
 
@@ -184,7 +184,7 @@ export const Navbar1 = () => {
             aria-label={isOpen ? "Sluit menu" : "Open menu"}
             aria-expanded={isOpen}
             aria-controls="mobile-menu"
-            className="md:hidden flex items-center justify-center w-8 h-8 rounded-full text-foreground bg-white/[0.06] border border-white/[0.08] hover:bg-white/[0.10] transition-colors duration-300"
+            className="md:hidden flex items-center justify-center w-10 h-10 rounded-full text-foreground bg-white/[0.06] border border-white/[0.08] hover:bg-white/[0.10] transition-colors duration-300"
           >
             <AnimatePresence mode="wait" initial={false}>
               {isOpen ? (
@@ -195,7 +195,7 @@ export const Navbar1 = () => {
                   exit={{ rotate: 90, opacity: 0 }}
                   transition={{ duration: 0.22 }}
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-5 w-5" />
                 </motion.span>
               ) : (
                 <motion.span
@@ -205,7 +205,7 @@ export const Navbar1 = () => {
                   exit={{ rotate: -90, opacity: 0 }}
                   transition={{ duration: 0.22 }}
                 >
-                  <Menu className="h-4 w-4" />
+                  <Menu className="h-5 w-5" />
                 </motion.span>
               )}
             </AnimatePresence>

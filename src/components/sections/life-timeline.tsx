@@ -450,86 +450,157 @@ export function LifeTimeline() {
         </div>
       </section>
 
-      {/* ----- Mobile / tablet: vertical stack ----- */}
+      {/* ----- Mobile / tablet: auto-scrolling marquee of timeline photos ----- */}
       <section
         id="reis-mobile"
-        className="md:hidden relative py-24 px-6"
+        className="md:hidden relative py-24 overflow-hidden"
         aria-label="De reis achter de visie"
       >
-        <div className="mb-16">
-          <div className="flex items-center gap-4 mb-10">
-            <span className="h-px w-10 bg-foreground/20" />
-            <span className="eyebrow">Life Timeline — 03</span>
-          </div>
-          <h2 className="display-lg">
-            De reis achter <span className="display-italic">de visie.</span>
-          </h2>
-          <p className="mt-8 text-muted-foreground leading-relaxed">
-            Van vroege lessen tot financiële expertise. Van persoonlijke groei
-            tot het bouwen van platformen die mensen anders leren kijken naar
-            geld, controle en vrijheid.
-          </p>
+        {/* Heading block */}
+        <div className="px-6 mb-14">
+          <Reveal>
+            <div className="flex items-center gap-4 mb-10">
+              <span className="h-px w-10 bg-foreground/20" />
+              <span className="eyebrow">Life Timeline — 03</span>
+            </div>
+          </Reveal>
+          <Reveal delay={120}>
+            <h2 className="display-lg">
+              De reis achter <span className="display-italic">de visie.</span>
+            </h2>
+          </Reveal>
+          <Reveal delay={240}>
+            <p className="mt-8 text-muted-foreground leading-relaxed">
+              Van vroege lessen tot financiële expertise. Van persoonlijke groei
+              tot het bouwen van platformen die mensen anders leren kijken naar
+              geld, controle en vrijheid.
+            </p>
+          </Reveal>
         </div>
 
-        <div className="space-y-7">
-          {ITEMS.map((item) => (
-            <Reveal key={item.n}>
-              <article className="relative rounded-[20px] overflow-hidden border border-white/[0.07] bg-card">
-                <div className="relative aspect-[4/5]">
-                  <div
-                    className="absolute inset-0"
-                    style={{
-                      backgroundImage:
-                        "linear-gradient(135deg, #181818 0%, #0a0a0a 60%, #050505 100%)",
-                    }}
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <span className="font-serif text-[140px] leading-none text-foreground/[0.05]">
-                      {item.n}
-                    </span>
-                  </div>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={item.img}
-                    alt={item.title}
-                    loading="lazy"
-                    className="absolute inset-0 w-full h-full object-cover grayscale brightness-[0.6]"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).style.opacity = "0";
-                    }}
-                  />
-                  <div
-                    className="absolute inset-0"
-                    style={{
-                      background:
-                        "linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.95) 100%)",
-                    }}
-                  />
-                  <div className="absolute inset-0 p-6 flex flex-col justify-between">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] tracking-[0.32em] uppercase text-foreground/70">
-                        {item.phase}
-                      </span>
-                      <span className="text-[10px] tracking-[0.32em] uppercase text-subtle-foreground">
-                        {item.n}&nbsp;/&nbsp;15
-                      </span>
-                    </div>
-                    <div>
-                      <h3 className="font-serif text-3xl text-foreground mb-3">
-                        {item.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground leading-relaxed">
-                        {item.body}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </article>
-            </Reveal>
-          ))}
+        {/* Auto-scrolling marquee */}
+        <div className="relative marquee-paused">
+          {/* Soft accent glow behind the strip */}
+          <div
+            aria-hidden
+            className="absolute inset-0 -z-10 pointer-events-none"
+            style={{
+              background:
+                "radial-gradient(50% 60% at 50% 50%, rgba(184, 58, 58,0.08), transparent 70%)",
+              filter: "blur(60px)",
+            }}
+          />
+
+          <div className="relative w-full overflow-hidden">
+            <div className="flex items-stretch gap-4 marquee-track-left">
+              {/* Duplicated for a seamless infinite loop */}
+              {[...ITEMS, ...ITEMS].map((item, i) => (
+                <MobileTimelineCard
+                  key={`${item.n}-${i}`}
+                  item={item}
+                  index={i}
+                />
+              ))}
+            </div>
+
+            {/* Edge fades */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 left-0 w-16 z-20"
+              style={{
+                background:
+                  "linear-gradient(90deg, rgb(5,5,5) 0%, transparent 100%)",
+              }}
+            />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 right-0 w-16 z-20"
+              style={{
+                background:
+                  "linear-gradient(270deg, rgb(5,5,5) 0%, transparent 100%)",
+              }}
+            />
+          </div>
+
+          {/* Caption strip below marquee */}
+          <div className="mt-8 px-6 flex items-center justify-between text-[10px] tracking-[0.32em] uppercase text-subtle-foreground">
+            <span>Hoofdstuk 01 — 15</span>
+            <span>15 fragmenten</span>
+          </div>
         </div>
       </section>
 
     </>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  MobileTimelineCard — fixed tile inside the marquee                         */
+/* -------------------------------------------------------------------------- */
+
+function MobileTimelineCard({
+  item,
+}: {
+  item: TimelineItem;
+  index: number;
+}) {
+  return (
+    <article className="relative shrink-0 w-[240px] sm:w-[280px] aspect-[4/5] rounded-[18px] overflow-hidden border border-white/[0.07] bg-card">
+      {/* Placeholder gradient */}
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage:
+            "linear-gradient(135deg, #181818 0%, #0a0a0a 60%, #050505 100%)",
+        }}
+      />
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+        <span className="font-serif text-[120px] leading-none text-foreground/[0.05]">
+          {item.n}
+        </span>
+      </div>
+
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={item.img}
+        alt={item.title}
+        loading="lazy"
+        draggable={false}
+        className="absolute inset-0 w-full h-full object-cover grayscale brightness-[0.65] contrast-[1.05]"
+        onError={(e) => {
+          (e.currentTarget as HTMLImageElement).style.opacity = "0";
+        }}
+      />
+
+      {/* Bottom gradient for legibility */}
+      <div
+        aria-hidden
+        className="absolute inset-x-0 bottom-0 h-[60%] pointer-events-none"
+        style={{
+          background:
+            "linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.95) 100%)",
+        }}
+      />
+
+      {/* Overlay text */}
+      <div className="absolute inset-0 p-5 flex flex-col justify-between">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] tracking-[0.32em] uppercase text-foreground/75">
+            {item.phase}
+          </span>
+          <span className="text-[10px] tracking-[0.32em] uppercase text-subtle-foreground">
+            {item.n}&nbsp;/&nbsp;15
+          </span>
+        </div>
+        <div>
+          <h3 className="font-serif text-[22px] leading-tight text-foreground">
+            {item.title}
+          </h3>
+        </div>
+      </div>
+
+      {/* Border */}
+      <div className="absolute inset-0 rounded-[inherit] border border-white/[0.05] pointer-events-none" />
+    </article>
   );
 }

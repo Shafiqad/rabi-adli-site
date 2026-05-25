@@ -28,7 +28,7 @@ export function Intro() {
   return (
     <section
       id="over"
-      className="relative py-28 md:py-40 md:overflow-hidden"
+      className="relative py-28 md:py-40 overflow-hidden"
     >
       {/* ====================== TEXT BLOCK ====================== */}
       <div className="section-wrap mx-auto max-w-7xl">
@@ -88,34 +88,8 @@ export function Intro() {
         </div>
       </div>
 
-      {/* ====================== MOBILE — STACKED STICKY PHOTOS ====================== */}
-      <div className="md:hidden relative mt-20 px-6">
-        {/* Soft accent glow behind the stack */}
-        <div
-          aria-hidden
-          className="absolute inset-0 -z-10 pointer-events-none"
-          style={{
-            background:
-              "radial-gradient(60% 50% at 50% 30%, rgba(184, 58, 58,0.08), transparent 70%)",
-            filter: "blur(60px)",
-          }}
-        />
-
-        <div className="space-y-[18vh] pb-[24vh]">
-          {PHOTOS.map((p, i) => (
-            <div
-              key={p.src}
-              className="sticky top-[92px]"
-              style={{ zIndex: 10 + i }}
-            >
-              <StackedPhoto src={p.src} alt={p.alt} index={i} />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ====================== DESKTOP — FULL-BLEED HORIZONTAL CAROUSEL ====================== */}
-      <div className="hidden md:block relative mt-20 md:mt-28 marquee-paused">
+      {/* ====================== FULL-BLEED HORIZONTAL MARQUEE (mobile + desktop) ====================== */}
+      <div className="relative mt-20 md:mt-28 marquee-paused">
         {/* Soft accent glow behind the strip */}
         <div
           aria-hidden
@@ -158,63 +132,6 @@ export function Intro() {
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/*  StackedPhoto — mobile sticky-stack tile                                    */
-/* -------------------------------------------------------------------------- */
-
-function StackedPhoto({
-  src,
-  alt,
-  index,
-}: {
-  src: string;
-  alt: string;
-  index: number;
-}) {
-  return (
-    <div className="group relative w-full aspect-[4/5] rounded-[22px] overflow-hidden border border-white/[0.08] bg-card shadow-[0_30px_70px_-25px_rgba(0,0,0,0.85)]">
-      {/* Placeholder gradient */}
-      <div
-        className="absolute inset-0"
-        style={{
-          backgroundImage:
-            "linear-gradient(150deg, #1a1a1a 0%, #0c0c0c 60%, #050505 100%)",
-        }}
-      />
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
-        <span className="font-serif text-[120px] leading-none text-foreground/[0.05]">
-          {String(index + 1).padStart(2, "0")}
-        </span>
-      </div>
-
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={src}
-        alt={alt}
-        loading="lazy"
-        draggable={false}
-        className="absolute inset-0 w-full h-full object-cover grayscale brightness-[0.85] contrast-[1.05]"
-        onError={(e) => {
-          (e.currentTarget as HTMLImageElement).style.opacity = "0";
-        }}
-      />
-
-      {/* Bottom gradient + index label for editorial feel */}
-      <div
-        aria-hidden
-        className="absolute inset-x-0 bottom-0 h-[45%] pointer-events-none"
-        style={{
-          background:
-            "linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.7) 100%)",
-        }}
-      />
-      <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between text-[10px] tracking-[0.32em] uppercase text-foreground/85">
-        <span>R · A</span>
-        <span>{String(index + 1).padStart(2, "0")} / {String(4).padStart(2, "0")}</span>
-      </div>
-    </div>
-  );
-}
 
 /* -------------------------------------------------------------------------- */
 /*  CarouselPhoto — fixed-height tile with gradient fallback                   */
