@@ -92,7 +92,7 @@ export function Podcasts() {
         <div className="text-center mb-14 md:mb-16">
           <Reveal>
             <span className="text-[11px] tracking-[0.32em] uppercase text-accent font-medium">
-              Podcasts & Radio
+              The Rabi Adli Podcast
             </span>
           </Reveal>
           <Reveal delay={150}>
