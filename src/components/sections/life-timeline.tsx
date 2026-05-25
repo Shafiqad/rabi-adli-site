@@ -2,13 +2,7 @@
 
 import * as React from "react";
 import { useRef, useState } from "react";
-import {
-  motion,
-  useScroll,
-  useTransform,
-  useMotionValueEvent,
-  type MotionValue,
-} from "motion/react";
+import { motion, useScroll, useTransform, useMotionValueEvent } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Reveal } from "@/components/reveal";
 
@@ -16,24 +10,12 @@ import { Reveal } from "@/components/reveal";
 /*  Data — edit copy / swap image paths here.                                  */
 /* -------------------------------------------------------------------------- */
 
-type CardSize = "sm" | "md" | "lg" | "xl";
-
-const SIZE_CLASS: Record<CardSize, string> = {
-  sm: "w-[260px] h-[360px]",
-  md: "w-[300px] h-[400px]",
-  lg: "w-[340px] h-[440px]",
-  xl: "w-[380px] h-[480px]",
-};
-
 interface TimelineItem {
   n: string;
   phase: string;
   title: string;
   body: string;
   img: string;
-  size: CardSize;
-  rotate: number;
-  offset: number; // px translateY for floating archive feel
 }
 
 const ITEMS: TimelineItem[] = [
@@ -43,9 +25,6 @@ const ITEMS: TimelineItem[] = [
     title: "Het begin",
     body: "Ik was zeven jaar oud toen ik in een vliegtuig stapte. Ik wist niet waar ik naartoe ging. Ik sprak de taal niet. Ik kende niemand. Het enige wat ik wist: mijn vader had ons achtergelaten om ons een betere toekomst te geven.",
     img: "/images/rabi-timeline-01.jpg",
-    size: "md",
-    rotate: -1.6,
-    offset: 0,
   },
   {
     n: "02",
@@ -53,9 +32,6 @@ const ITEMS: TimelineItem[] = [
     title: "Vroege vorming",
     body: "Een nieuw land, een nieuwe taal, een nieuwe manier van denken. In die jaren leerde ik dat overleven niet hetzelfde is als bouwen — en dat allebei beginnen bij heel goed kijken.",
     img: "/images/rabi-timeline-02.jpg",
-    size: "lg",
-    rotate: 0.9,
-    offset: -28,
   },
   {
     n: "03",
@@ -63,9 +39,6 @@ const ITEMS: TimelineItem[] = [
     title: "De basis",
     body: "Mijn familie was alles. Geld was schaars, verantwoordelijkheid niet. Daar leerde ik dat keuzes nooit alleen over jezelf gaan en dat discipline iets is dat je doorgeeft.",
     img: "/images/rabi-timeline-03.jpg",
-    size: "sm",
-    rotate: -0.4,
-    offset: 22,
   },
   {
     n: "04",
@@ -73,9 +46,6 @@ const ITEMS: TimelineItem[] = [
     title: "Leren kijken",
     body: "Op school werd ik niet de slimste, wel de meest nieuwsgierige. Niet alleen 'wat moet ik weten', maar 'waarom werkt het zo'. Die vraag is sindsdien nooit meer weggegaan.",
     img: "/images/rabi-timeline-04.jpg",
-    size: "md",
-    rotate: 1.3,
-    offset: -12,
   },
   {
     n: "05",
@@ -83,9 +53,6 @@ const ITEMS: TimelineItem[] = [
     title: "Meer willen begrijpen",
     body: "Op een gegeven moment besefte ik: geld is geen onderwerp — het is een taal. En als je die taal niet spreekt, beslissen anderen voor jou. Vanaf dat moment wilde ik die taal vlekkeloos leren spreken.",
     img: "/images/rabi-timeline-05.jpg",
-    size: "xl",
-    rotate: -0.8,
-    offset: 14,
   },
   {
     n: "06",
@@ -93,9 +60,6 @@ const ITEMS: TimelineItem[] = [
     title: "De verdieping",
     body: "Boekhouden, fiscaliteit, accounting, control. Voor de meeste mensen droge stof. Voor mij de eerste keer dat alles begon te kloppen — geld bleek geen toeval, maar systeem.",
     img: "/images/rabi-timeline-06.jpg",
-    size: "md",
-    rotate: 0,
-    offset: -22,
   },
   {
     n: "07",
@@ -103,9 +67,6 @@ const ITEMS: TimelineItem[] = [
     title: "De financiële wereld",
     body: "De eerste keer dat ik binnen kwam bij een bank, voelde het als een andere wereld. Andere taal, ander tempo, andere belangen. Die wereld doorzien werd mijn missie — niet om mee te draaien, maar om hem écht te begrijpen.",
     img: "/images/rabi-timeline-07.jpg",
-    size: "lg",
-    rotate: 0.6,
-    offset: 8,
   },
   {
     n: "08",
@@ -113,9 +74,6 @@ const ITEMS: TimelineItem[] = [
     title: "Binnen het systeem",
     body: "Bij ABN AMRO zag ik het van dichtbij: hoe banken denken, hoe risico wordt afgewogen, hoe geld bewogen wordt. Hier leerde ik dat 'het systeem' geen mythe is — het is gewoon goed georganiseerd.",
     img: "/images/rabi-timeline-08.jpg",
-    size: "md",
-    rotate: -1.2,
-    offset: -16,
   },
   {
     n: "09",
@@ -123,9 +81,6 @@ const ITEMS: TimelineItem[] = [
     title: "Structuur en strategie",
     body: "Bij Deloitte leerde ik wat ondernemers écht missen: structuur. Niet meer doen, maar slimmer doen. Cijfers worden pas waardevol als ze leiden tot betere beslissingen.",
     img: "/images/rabi-timeline-09.jpg",
-    size: "sm",
-    rotate: 1.0,
-    offset: 24,
   },
   {
     n: "10",
@@ -133,9 +88,6 @@ const ITEMS: TimelineItem[] = [
     title: "Een andere blik",
     body: "Ik zag ondernemers met miljoenenomzet die geen idee hadden waar hun geld bleef. Hard werken bleek niet genoeg. Iemand moest die taal vertalen. Op dat moment besloot ik dat te worden.",
     img: "/images/rabi-timeline-10.jpg",
-    size: "lg",
-    rotate: -0.3,
-    offset: -10,
   },
   {
     n: "11",
@@ -143,9 +95,6 @@ const ITEMS: TimelineItem[] = [
     title: "Zelf bouwen",
     body: "Mijn baan opzeggen was geen sprong, het was een conclusie. Wat ik binnen wilde verbeteren, ging ik buiten bouwen. Vanaf dag één: 100% verantwoordelijkheid, 0% smoesjes.",
     img: "/images/rabi-timeline-11.jpg",
-    size: "xl",
-    rotate: 0.7,
-    offset: 12,
   },
   {
     n: "12",
@@ -153,9 +102,6 @@ const ITEMS: TimelineItem[] = [
     title: "Grip voor ondernemers",
     body: "Geldinstituut is gebouwd voor ondernemers die hun cijfers, fiscaliteit en groei serieus willen aanpakken. Geen pleisters. Een systeem dat je elke maand grip geeft op wat er gebeurt en wat het oplevert.",
     img: "/images/rabi-timeline-12.jpg",
-    size: "md",
-    rotate: -0.9,
-    offset: -18,
   },
   {
     n: "13",
@@ -163,9 +109,6 @@ const ITEMS: TimelineItem[] = [
     title: "Denken in vrijheid",
     body: "Moneyfesto gaat verder dan geld. Het is voor iedereen die niet wil meedeinen, maar bewuste keuzes wil maken — over kapitaal, ondernemerschap en het systeem. Voor de mensen die willen begrijpen, niet alleen meedoen.",
     img: "/images/rabi-timeline-13.jpg",
-    size: "lg",
-    rotate: 0.4,
-    offset: 16,
   },
   {
     n: "14",
@@ -173,9 +116,6 @@ const ITEMS: TimelineItem[] = [
     title: "De boodschap delen",
     body: "Op TikTok, LinkedIn, podcasts, radio en tv probeer ik één ding: financiële kennis terug bij de mensen brengen. Wat ik bij ABN en Deloitte leerde, was nooit bedoeld voor één elite. Inmiddels weet ik dat dat verschil maakt.",
     img: "/images/rabi-timeline-14.jpg",
-    size: "md",
-    rotate: -0.6,
-    offset: -6,
   },
   {
     n: "15",
@@ -183,9 +123,6 @@ const ITEMS: TimelineItem[] = [
     title: "De missie",
     body: "Vandaag bouw ik aan een ecosysteem dat mensen leert begrijpen, scherper te sturen en uiteindelijk vrij te zijn. Niet harder werken — scherper denken. Geld. Controle. Vrijheid — in die volgorde.",
     img: "/images/rabi-timeline-15.jpg",
-    size: "xl",
-    rotate: 0,
-    offset: 0,
   },
 ];
 
@@ -200,29 +137,17 @@ const NOISE_URL =
 
 function TimelineCard({
   item,
-  index,
-  scrollProgress,
 }: {
   item: TimelineItem;
   index: number;
-  scrollProgress: MotionValue<number>;
 }) {
-  // Subtle parallax — every other card drifts a touch
-  const direction = index % 3 === 0 ? -1 : index % 3 === 1 ? 0.6 : 0.2;
-  const yShift = useTransform(scrollProgress, [0, 1], [0, 36 * direction]);
-
   return (
-    <motion.div
+    <div
       className={cn(
         "relative shrink-0 transition-[transform,filter] duration-700 ease-out",
-        SIZE_CLASS[item.size],
+        "w-[320px] h-[440px]",
         "group/peer peer-hover:opacity-60"
       )}
-      style={{
-        y: yShift,
-        translateY: item.offset,
-        rotate: item.rotate,
-      }}
     >
       <div className="group relative w-full h-full rounded-[22px] overflow-hidden cursor-pointer">
         {/* Base gradient placeholder background */}
@@ -305,7 +230,7 @@ function TimelineCard({
           }}
         />
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -317,7 +242,6 @@ export function LifeTimeline() {
   const containerRef = useRef<HTMLElement | null>(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,
-    offset: ["start start", "end end"],
   });
 
   // Horizontal rail translation
@@ -418,12 +342,7 @@ export function LifeTimeline() {
               style={{ x }}
             >
               {ITEMS.map((item, i) => (
-                <TimelineCard
-                  key={item.n}
-                  item={item}
-                  index={i}
-                  scrollProgress={scrollYProgress}
-                />
+                <TimelineCard key={item.n} item={item} index={i} />
               ))}
             </motion.div>
 
