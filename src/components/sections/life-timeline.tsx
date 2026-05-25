@@ -367,7 +367,7 @@ export function LifeTimeline() {
         </div>
       </section>
 
-      {/* ----- Mobile: tilted photo gallery (cards replace each other on scroll) ----- */}
+      {/* ----- Mobile: sticky-stack (cards layer on top of each other as you scroll) ----- */}
       <section
         id="reis-mobile"
         className="md:hidden relative bg-background py-24"
@@ -395,13 +395,19 @@ export function LifeTimeline() {
           </Reveal>
         </div>
 
-        {/* Tilted polaroid-style photo gallery — each chapter gets its own scroll-page */}
-        <div className="px-6 space-y-[14vh] pb-[6vh]">
+        {/* Sticky-stack: each card stays pinned, next card slides up over it */}
+        <div className="px-6 max-w-[640px] mx-auto">
           {ITEMS.map((item, i) => (
-            <Reveal key={item.n}>
+            <div
+              key={item.n}
+              className="sticky top-[12vh] mb-[14vh] last:mb-0"
+              style={{ zIndex: i + 1 }}
+            >
               <GalleryCard item={item} index={i} />
-            </Reveal>
+            </div>
           ))}
+          {/* Tail spacer so the final card lingers before the next section */}
+          <div className="h-[28vh]" aria-hidden />
         </div>
 
         {/* Caption strip */}
@@ -415,35 +421,13 @@ export function LifeTimeline() {
 }
 
 /* -------------------------------------------------------------------------- */
-/*  GalleryCard — polaroid-feel tile, slight per-card tilt for editorial vibe  */
+/*  GalleryCard — single tile in the mobile sticky-stack                       */
 /* -------------------------------------------------------------------------- */
 
-// Hand-tuned tilts so the column feels intentional, not random.
-// First and last cards stay straight (anchor moments — Geboorte & Nu).
-const TILTS = [
-  0,    // 01 Geboorte — straight (anchor)
-  1.6,  // 02
-  -2.1, // 03
-  1.2,  // 04
-  -1.4, // 05
-  1.9,  // 06
-  -2.3, // 07
-  1.5,  // 08
-  -1.8, // 09
-  2.1,  // 10
-  -1.6, // 11
-  1.3,  // 12
-  -2.0, // 13
-  1.8,  // 14
-  0,    // 15 Nu — straight (anchor)
-];
-
 function GalleryCard({ item, index }: { item: TimelineItem; index: number }) {
-  const tilt = TILTS[index] ?? 0;
   return (
     <article
-      className="relative w-full aspect-[4/5] rounded-[24px] overflow-hidden border border-white/[0.08] bg-card shadow-[0_30px_80px_-25px_rgba(0,0,0,0.9)] transition-transform duration-700 ease-out"
-      style={{ transform: `rotate(${tilt}deg)` }}
+      className="relative w-full aspect-[4/5] rounded-[24px] overflow-hidden border border-white/[0.08] bg-card shadow-[0_30px_80px_-25px_rgba(0,0,0,0.9)]"
     >
       {/* Placeholder gradient */}
       <div
