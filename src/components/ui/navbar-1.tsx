@@ -88,6 +88,10 @@ export const Navbar1 = () => {
               : "bg-black/90 md:bg-[rgba(10,10,10,0.55)] backdrop-blur-xl md:backdrop-blur-md border-white/[0.06] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.55)] md:shadow-none"
           )}
         >
+          {/* Mobile-only invisible spacer — balances the menu button on the right
+              so the wordmark sits visually centered inside the dynamic-island pill. */}
+          <span aria-hidden className="md:hidden block w-8 h-8 shrink-0" />
+
           {/* Wordmark logo with subtle accent dot */}
           <a
             href="#top"
@@ -96,12 +100,12 @@ export const Navbar1 = () => {
           >
             <span
               aria-hidden
-              className="block h-1 w-1 rounded-full bg-accent/65 shadow-[0_0_6px_rgba(184, 58, 58,0.5)]"
+              className="hidden md:block h-1 w-1 rounded-full bg-accent/65 shadow-[0_0_6px_rgba(184, 58, 58,0.5)]"
             />
             <SignatureLogo
-              width={160}
-              height={42}
-              className="text-foreground text-[18px] md:text-[24px]"
+              width={220}
+              height={58}
+              className="text-foreground text-[18px] md:text-[26px] h-[34px] md:h-[44px] w-auto"
             />
           </a>
 

@@ -33,7 +33,6 @@ export function SignatureLogo({
           "inline-flex items-center font-serif italic text-[17px] tracking-[0.005em] leading-none select-none",
           className
         )}
-        style={{ height }}
       >
         Rabi Adli
       </span>
@@ -50,7 +49,6 @@ export function SignatureLogo({
       draggable={false}
       onError={() => setImgFailed(true)}
       className={cn("object-contain select-none", className)}
-      style={{ width, height }}
     />
   );
 }

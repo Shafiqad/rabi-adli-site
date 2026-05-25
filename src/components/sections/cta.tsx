@@ -78,9 +78,9 @@ export function CtaSection() {
 
             <Reveal delay={460}>
               <div className="mt-12 flex flex-col sm:flex-row gap-4 sm:gap-5 items-center justify-center">
-                <ShinyButton href="#bedrijven">Bekijk zijn wereld</ShinyButton>
+                <ShinyButton href="#bedrijven">Bekijk mijn wereld</ShinyButton>
                 <ShinyButton href="mailto:contact@rabiadli.nl">
-                  Neem contact op
+                  Neem contact met mij op
                 </ShinyButton>
               </div>
             </Reveal>
