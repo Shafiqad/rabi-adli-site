@@ -1,11 +1,29 @@
 "use client";
 
 import * as React from "react";
+import { useRef, useState } from "react";
+import {
+  motion,
+  useScroll,
+  useTransform,
+  useMotionValueEvent,
+  type MotionValue,
+} from "motion/react";
+import { cn } from "@/lib/utils";
 import { Reveal } from "@/components/reveal";
 
 /* -------------------------------------------------------------------------- */
 /*  Data — edit copy / swap image paths here.                                  */
 /* -------------------------------------------------------------------------- */
+
+type CardSize = "sm" | "md" | "lg" | "xl";
+
+const SIZE_CLASS: Record<CardSize, string> = {
+  sm: "w-[260px] h-[360px]",
+  md: "w-[300px] h-[400px]",
+  lg: "w-[340px] h-[440px]",
+  xl: "w-[380px] h-[480px]",
+};
 
 interface TimelineItem {
   n: string;
@@ -13,6 +31,9 @@ interface TimelineItem {
   title: string;
   body: string;
   img: string;
+  size: CardSize;
+  rotate: number;
+  offset: number; // px translateY for floating archive feel
 }
 
 const ITEMS: TimelineItem[] = [
@@ -22,6 +43,9 @@ const ITEMS: TimelineItem[] = [
     title: "Het begin",
     body: "Iedere visie begint ergens. Bij afkomst, omgeving en de eerste lessen die je meekrijgt.",
     img: "/images/rabi-timeline-01.jpg",
+    size: "md",
+    rotate: -1.6,
+    offset: 0,
   },
   {
     n: "02",
@@ -29,6 +53,9 @@ const ITEMS: TimelineItem[] = [
     title: "Vroege vorming",
     body: "De jaren waarin karakter, nieuwsgierigheid en discipline langzaam vorm krijgen.",
     img: "/images/rabi-timeline-02.jpg",
+    size: "lg",
+    rotate: 0.9,
+    offset: -28,
   },
   {
     n: "03",
@@ -36,6 +63,9 @@ const ITEMS: TimelineItem[] = [
     title: "De basis",
     body: "De omgeving waarin waarden, verantwoordelijkheid en ambitie steeds belangrijker werden.",
     img: "/images/rabi-timeline-03.jpg",
+    size: "sm",
+    rotate: -0.4,
+    offset: 22,
   },
   {
     n: "04",
@@ -43,6 +73,9 @@ const ITEMS: TimelineItem[] = [
     title: "Leren kijken",
     body: "Niet alleen leren wat er gezegd wordt, maar leren begrijpen hoe systemen werken.",
     img: "/images/rabi-timeline-04.jpg",
+    size: "md",
+    rotate: 1.3,
+    offset: -12,
   },
   {
     n: "05",
@@ -50,6 +83,9 @@ const ITEMS: TimelineItem[] = [
     title: "Meer willen begrijpen",
     body: "Het besef dat geld, keuzes en vrijheid sterker met elkaar verbonden zijn dan mensen denken.",
     img: "/images/rabi-timeline-05.jpg",
+    size: "xl",
+    rotate: -0.8,
+    offset: 14,
   },
   {
     n: "06",
@@ -57,6 +93,9 @@ const ITEMS: TimelineItem[] = [
     title: "De verdieping",
     body: "Een fase waarin kennis, financiële inzichten en persoonlijke groei samenkwamen.",
     img: "/images/rabi-timeline-06.jpg",
+    size: "md",
+    rotate: 0,
+    offset: -22,
   },
   {
     n: "07",
@@ -64,6 +103,9 @@ const ITEMS: TimelineItem[] = [
     title: "De financiële wereld",
     body: "De eerste ervaringen binnen omgevingen waar cijfers, structuur en verantwoordelijkheid centraal staan.",
     img: "/images/rabi-timeline-07.jpg",
+    size: "lg",
+    rotate: 0.6,
+    offset: 8,
   },
   {
     n: "08",
@@ -71,6 +113,9 @@ const ITEMS: TimelineItem[] = [
     title: "Binnen het systeem",
     body: "Van dichtbij zien hoe geld, advies en financiële structuren in de praktijk werken.",
     img: "/images/rabi-timeline-08.jpg",
+    size: "md",
+    rotate: -1.2,
+    offset: -16,
   },
   {
     n: "09",
@@ -78,6 +123,9 @@ const ITEMS: TimelineItem[] = [
     title: "Structuur en strategie",
     body: "Leren denken in systemen, processen, controle en besluitvorming.",
     img: "/images/rabi-timeline-09.jpg",
+    size: "sm",
+    rotate: 1.0,
+    offset: 24,
   },
   {
     n: "10",
@@ -85,6 +133,9 @@ const ITEMS: TimelineItem[] = [
     title: "Een andere blik",
     body: "Het besef dat veel mensen geld verdienen, maar het systeem erachter niet echt begrijpen.",
     img: "/images/rabi-timeline-10.jpg",
+    size: "lg",
+    rotate: -0.3,
+    offset: -10,
   },
   {
     n: "11",
@@ -92,6 +143,9 @@ const ITEMS: TimelineItem[] = [
     title: "Zelf bouwen",
     body: "Van kennis naar actie. Van ervaring naar eigen visie. Van meedraaien naar creëren.",
     img: "/images/rabi-timeline-11.jpg",
+    size: "xl",
+    rotate: 0.7,
+    offset: 12,
   },
   {
     n: "12",
@@ -99,6 +153,9 @@ const ITEMS: TimelineItem[] = [
     title: "Grip voor ondernemers",
     body: "Een platform voor ondernemers die hun cijfers, belasting en financiële strategie serieuzer willen nemen.",
     img: "/images/rabi-timeline-12.jpg",
+    size: "md",
+    rotate: -0.9,
+    offset: -18,
   },
   {
     n: "13",
@@ -106,6 +163,9 @@ const ITEMS: TimelineItem[] = [
     title: "Denken in vrijheid",
     body: "Een omgeving voor mensen die anders willen kijken naar geld, kapitaal, ondernemerschap en het systeem.",
     img: "/images/rabi-timeline-13.jpg",
+    size: "lg",
+    rotate: 0.4,
+    offset: 16,
   },
   {
     n: "14",
@@ -113,6 +173,9 @@ const ITEMS: TimelineItem[] = [
     title: "De boodschap delen",
     body: "Inzichten over geld, fiscaliteit, ondernemerschap en vermogensopbouw toegankelijk maken voor een groter publiek.",
     img: "/images/rabi-timeline-14.jpg",
+    size: "md",
+    rotate: -0.6,
+    offset: -6,
   },
   {
     n: "15",
@@ -120,84 +183,331 @@ const ITEMS: TimelineItem[] = [
     title: "De missie",
     body: "Mensen helpen niet alleen meer te verdienen, maar vooral beter te begrijpen, scherper te sturen en vrijer te bouwen.",
     img: "/images/rabi-timeline-15.jpg",
+    size: "xl",
+    rotate: 0,
+    offset: 0,
   },
 ];
 
 const TOTAL = ITEMS.length;
 
 /* -------------------------------------------------------------------------- */
-/*  Section — sticky-stack scroll (mobile + desktop)                           */
+/*  Card                                                                       */
+/* -------------------------------------------------------------------------- */
+
+const NOISE_URL =
+  "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/></svg>\")";
+
+function TimelineCard({
+  item,
+  index,
+  scrollProgress,
+}: {
+  item: TimelineItem;
+  index: number;
+  scrollProgress: MotionValue<number>;
+}) {
+  // Subtle parallax — every other card drifts a touch
+  const direction = index % 3 === 0 ? -1 : index % 3 === 1 ? 0.6 : 0.2;
+  const yShift = useTransform(scrollProgress, [0, 1], [0, 36 * direction]);
+
+  return (
+    <motion.div
+      className={cn(
+        "relative shrink-0 transition-[transform,filter] duration-700 ease-out",
+        SIZE_CLASS[item.size],
+        "group/peer peer-hover:opacity-60"
+      )}
+      style={{
+        y: yShift,
+        translateY: item.offset,
+        rotate: item.rotate,
+      }}
+    >
+      <div className="group relative w-full h-full rounded-[22px] overflow-hidden cursor-pointer">
+        {/* Base gradient placeholder background */}
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              "linear-gradient(135deg, #181818 0%, #0a0a0a 60%, #050505 100%)",
+          }}
+        />
+
+        {/* Ghost numeral — visible as a backdrop on placeholder cards */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+          <span className="font-serif text-[180px] leading-none text-foreground/[0.045]">
+            {item.n}
+          </span>
+        </div>
+
+        {/* User-replaceable image (gracefully falls back to placeholder bg) */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={item.img}
+          alt={item.title}
+          loading="lazy"
+          className="absolute inset-0 w-full h-full object-cover grayscale brightness-[0.55] contrast-[1.06] opacity-100 transition-[filter,transform] duration-1000 group-hover:grayscale-0 group-hover:brightness-100 group-hover:scale-[1.03]"
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).style.opacity = "0";
+          }}
+        />
+
+        {/* Bottom gradient for legibility */}
+        <div
+          className="absolute inset-x-0 bottom-0 h-[70%] pointer-events-none"
+          style={{
+            background:
+              "linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.55) 45%, rgba(0,0,0,0.95) 100%)",
+          }}
+        />
+
+        {/* Noise overlay */}
+        <div
+          aria-hidden
+          className="absolute inset-0 mix-blend-overlay opacity-[0.25] pointer-events-none"
+          style={{
+            backgroundImage: NOISE_URL,
+            backgroundSize: "200px 200px",
+          }}
+        />
+
+        {/* Border */}
+        <div className="absolute inset-0 rounded-[inherit] border border-white/[0.07] group-hover:border-accent/55 transition-colors duration-700 pointer-events-none" />
+
+        {/* Content */}
+        <div className="absolute inset-0 p-6 flex flex-col justify-between">
+          <div className="flex items-start justify-between">
+            <span className="text-[10px] tracking-[0.32em] uppercase text-foreground/70 group-hover:text-accent transition-colors duration-500">
+              {item.phase}
+            </span>
+            <span className="text-[10px] tracking-[0.32em] uppercase text-subtle-foreground">
+              {item.n}&nbsp;/&nbsp;{TOTAL}
+            </span>
+          </div>
+
+          <div>
+            <h3 className="font-serif text-[26px] leading-tight text-foreground">
+              {item.title}
+            </h3>
+            <p className="text-[13px] text-muted-foreground leading-relaxed max-h-0 opacity-0 mt-0 group-hover:max-h-32 group-hover:opacity-100 group-hover:mt-3 overflow-hidden transition-all duration-700 ease-out">
+              {item.body}
+            </p>
+          </div>
+        </div>
+
+        {/* Hover ring shadow */}
+        <div
+          className="absolute inset-0 rounded-[inherit] pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-700"
+          style={{
+            boxShadow:
+              "0 30px 90px -20px rgba(0,0,0,0.85), 0 0 0 1px rgba(184, 58, 58,0.08)",
+          }}
+        />
+      </div>
+    </motion.div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Section                                                                    */
 /* -------------------------------------------------------------------------- */
 
 export function LifeTimeline() {
+  const containerRef = useRef<HTMLElement | null>(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"],
+  });
+
+  // Horizontal rail translation
+  const x = useTransform(scrollYProgress, [0, 1], ["6%", "-72%"]);
+
+  // Progress line for the bottom indicator
+  const lineWidth = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
+
+  // Active item index — drives the active phase label
+  const [activeIdx, setActiveIdx] = useState(0);
+  useMotionValueEvent(scrollYProgress, "change", (v) => {
+    const next = Math.max(0, Math.min(TOTAL - 1, Math.floor(v * TOTAL)));
+    if (next !== activeIdx) setActiveIdx(next);
+  });
+
+  const active = ITEMS[activeIdx];
+
   return (
-    <section
-      id="reis"
-      className="relative bg-background py-24 md:py-32"
-      aria-label="De reis achter de visie"
-    >
-      {/* ----- Header ----- */}
-      <div className="section-wrap mx-auto max-w-7xl mb-16 md:mb-24">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-end">
-          <div className="lg:col-span-7">
-            <Reveal>
+    <>
+      {/* ----- Desktop: cinematic horizontal rail (scroll-driven) ----- */}
+      <section
+        ref={containerRef}
+        id="reis"
+        className="relative hidden md:block h-[320vh] bg-background"
+        aria-label="De reis achter de visie"
+      >
+        <div className="sticky top-0 h-screen overflow-hidden flex items-stretch">
+          {/* Decorative top corner brackets */}
+          <span className="absolute top-8 left-8 w-6 h-6 border-t border-l border-border z-30 pointer-events-none" />
+          <span className="absolute top-8 right-8 w-6 h-6 border-t border-r border-border z-30 pointer-events-none" />
+
+          {/* Sticky intro panel */}
+          <div className="relative z-20 h-screen w-[46%] xl:w-[42%] 2xl:w-[38%] flex flex-col justify-between py-24 lg:py-28 px-6 md:px-10 lg:px-14 pointer-events-none">
+            <div className="pointer-events-auto">
               <div className="flex items-center gap-4 mb-10">
                 <span className="h-px w-10 bg-foreground/20" />
                 <span className="eyebrow">Life Timeline — 03</span>
               </div>
-            </Reveal>
-            <Reveal delay={120}>
-              <h2 className="display-lg">
-                De reis achter <span className="display-italic">de visie.</span>
+              <h2 className="font-serif text-foreground text-[40px] xl:text-[44px] leading-[1.06] tracking-[-0.01em] max-w-[440px]">
+                De reis achter{" "}
+                <span className="display-italic">de visie.</span>
               </h2>
-            </Reveal>
+              <p className="mt-8 text-muted-foreground max-w-md text-[15px] leading-relaxed">
+                Van vroege lessen tot financiële expertise. Van persoonlijke
+                groei tot het bouwen van platformen die mensen anders leren
+                kijken naar geld, controle en vrijheid.
+              </p>
+            </div>
+
+            {/* Progress indicator */}
+            <div className="pointer-events-auto space-y-4 max-w-md">
+              <div className="flex items-baseline justify-between text-[10px] tracking-[0.32em] uppercase">
+                <span className="text-subtle-foreground">Hoofdstuk</span>
+                <span className="tabular-nums text-foreground">
+                  {active.n} / {TOTAL}
+                </span>
+              </div>
+
+              <h4 className="font-serif text-[28px] leading-none text-foreground">
+                {active.phase}
+              </h4>
+
+              <div className="relative h-px bg-border w-full mt-6">
+                <motion.div
+                  className="absolute inset-y-0 left-0 bg-accent"
+                  style={{ width: lineWidth }}
+                />
+                {/* tick marks */}
+                <div className="absolute inset-0 flex justify-between">
+                  {Array.from({ length: TOTAL }).map((_, i) => (
+                    <span
+                      key={i}
+                      className={cn(
+                        "block w-px h-2 -translate-y-[3px] transition-colors duration-300",
+                        i <= activeIdx ? "bg-accent/70" : "bg-border"
+                      )}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-baseline justify-between text-[10px] tracking-[0.32em] uppercase text-subtle-foreground pt-2">
+                <span>Het begin</span>
+                <span>De missie</span>
+              </div>
+
+              <div className="pt-3 flex items-center gap-3 text-[10px] tracking-[0.32em] uppercase text-subtle-foreground">
+                <span className="block w-4 h-px bg-foreground/40" />
+                <span>Scroll om te bewegen</span>
+              </div>
+            </div>
           </div>
-          <Reveal delay={260} className="lg:col-span-4 lg:col-start-9">
-            <p className="text-muted-foreground text-base leading-relaxed">
+
+          {/* Horizontal rail */}
+          <div className="relative flex-1 min-w-0 h-screen flex items-center overflow-visible">
+            <motion.div
+              className="flex items-center gap-10 pl-12 pr-[28vw]"
+              style={{ x }}
+            >
+              {ITEMS.map((item, i) => (
+                <TimelineCard
+                  key={item.n}
+                  item={item}
+                  index={i}
+                  scrollProgress={scrollYProgress}
+                />
+              ))}
+            </motion.div>
+
+            {/* Edge fades */}
+            <div
+              aria-hidden
+              className="absolute inset-y-0 left-0 w-24 z-10 pointer-events-none"
+              style={{
+                background:
+                  "linear-gradient(90deg, #050505 0%, transparent 100%)",
+              }}
+            />
+            <div
+              aria-hidden
+              className="absolute inset-y-0 right-0 w-24 z-10 pointer-events-none"
+              style={{
+                background:
+                  "linear-gradient(270deg, #050505 0%, transparent 100%)",
+              }}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ----- Mobile: sticky-stack scroll ----- */}
+      <section
+        id="reis-mobile"
+        className="md:hidden relative bg-background py-24"
+        aria-label="De reis achter de visie"
+      >
+        {/* Header */}
+        <div className="px-6 mb-16">
+          <Reveal>
+            <div className="flex items-center gap-4 mb-10">
+              <span className="h-px w-10 bg-foreground/20" />
+              <span className="eyebrow">Life Timeline — 03</span>
+            </div>
+          </Reveal>
+          <Reveal delay={120}>
+            <h2 className="display-lg">
+              De reis achter <span className="display-italic">de visie.</span>
+            </h2>
+          </Reveal>
+          <Reveal delay={240}>
+            <p className="mt-8 text-muted-foreground leading-relaxed">
               Van vroege lessen tot financiële expertise. Van persoonlijke groei
               tot het bouwen van platformen die mensen anders leren kijken naar
               geld, controle en vrijheid.
             </p>
           </Reveal>
         </div>
-      </div>
 
-      {/* ----- Sticky stack ----- */}
-      <div className="px-6 md:px-10 max-w-[640px] md:max-w-[760px] mx-auto">
-        {ITEMS.map((item, i) => (
-          <div
-            key={item.n}
-            className="sticky top-[12vh] md:top-[14vh] mb-[12vh] md:mb-[16vh] last:mb-0"
-            style={{ zIndex: i + 1 }}
-          >
-            <StackCard item={item} index={i} />
-          </div>
-        ))}
-        {/* Tail spacer so the final card lingers before the next section */}
-        <div className="h-[26vh] md:h-[30vh]" aria-hidden />
-      </div>
+        {/* Sticky stack */}
+        <div className="px-6 max-w-[640px] mx-auto">
+          {ITEMS.map((item, i) => (
+            <div
+              key={item.n}
+              className="sticky top-[12vh] mb-[12vh] last:mb-0"
+              style={{ zIndex: i + 1 }}
+            >
+              <StackCard item={item} index={i} />
+            </div>
+          ))}
+          {/* Tail spacer so the final card lingers before the next section */}
+          <div className="h-[26vh]" aria-hidden />
+        </div>
 
-      {/* ----- Caption strip below stack ----- */}
-      <div className="mt-10 px-6 md:px-10 max-w-[760px] mx-auto flex items-center justify-between text-[10px] md:text-[11px] tracking-[0.32em] uppercase text-subtle-foreground">
-        <span>Hoofdstuk 01 — 15</span>
-        <span>{TOTAL} fragmenten</span>
-      </div>
-    </section>
+        {/* Caption strip */}
+        <div className="mt-10 px-6 flex items-center justify-between text-[10px] tracking-[0.32em] uppercase text-subtle-foreground">
+          <span>Hoofdstuk 01 — {TOTAL}</span>
+          <span>{TOTAL} fragmenten</span>
+        </div>
+      </section>
+    </>
   );
 }
 
 /* -------------------------------------------------------------------------- */
-/*  StackCard — single tile in the sticky scroll stack                         */
+/*  StackCard — single tile in the mobile sticky-stack                         */
 /* -------------------------------------------------------------------------- */
-
-const NOISE_URL =
-  "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/></svg>\")";
 
 function StackCard({ item, index }: { item: TimelineItem; index: number }) {
   return (
-    <article
-      className="relative w-full aspect-[4/5] md:aspect-[3/4] rounded-[24px] overflow-hidden border border-white/[0.08] bg-card shadow-[0_30px_80px_-25px_rgba(0,0,0,0.9)]"
-    >
+    <article className="relative w-full aspect-[4/5] rounded-[24px] overflow-hidden border border-white/[0.08] bg-card shadow-[0_30px_80px_-25px_rgba(0,0,0,0.9)]">
       {/* Placeholder gradient */}
       <div
         aria-hidden
@@ -208,12 +518,12 @@ function StackCard({ item, index }: { item: TimelineItem; index: number }) {
         }}
       />
 
-      {/* Ghost numeral backdrop (placeholder & atmospheric texture) */}
+      {/* Ghost numeral backdrop */}
       <div
         aria-hidden
         className="absolute inset-0 flex items-center justify-center pointer-events-none select-none"
       >
-        <span className="font-serif text-[180px] md:text-[240px] leading-none text-foreground/[0.045]">
+        <span className="font-serif text-[180px] leading-none text-foreground/[0.045]">
           {item.n}
         </span>
       </div>
@@ -254,21 +564,21 @@ function StackCard({ item, index }: { item: TimelineItem; index: number }) {
       <div className="absolute inset-0 rounded-[inherit] border border-white/[0.05] pointer-events-none" />
 
       {/* Overlay text */}
-      <div className="absolute inset-0 p-7 md:p-10 flex flex-col justify-between">
+      <div className="absolute inset-0 p-7 flex flex-col justify-between">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] md:text-[11px] tracking-[0.32em] uppercase text-foreground/75">
+          <span className="text-[10px] tracking-[0.32em] uppercase text-foreground/75">
             {item.phase}
           </span>
-          <span className="text-[10px] md:text-[11px] tracking-[0.32em] uppercase text-subtle-foreground">
+          <span className="text-[10px] tracking-[0.32em] uppercase text-subtle-foreground">
             {item.n}&nbsp;/&nbsp;{TOTAL}
           </span>
         </div>
 
         <div className="max-w-lg">
-          <h3 className="font-serif text-[28px] sm:text-[32px] md:text-[40px] leading-[1.06] tracking-[-0.005em] text-foreground">
+          <h3 className="font-serif text-[28px] sm:text-[32px] leading-[1.06] tracking-[-0.005em] text-foreground">
             {item.title}
           </h3>
-          <p className="mt-4 text-[13.5px] md:text-[15px] leading-[1.55] text-muted-foreground">
+          <p className="mt-4 text-[13.5px] leading-[1.55] text-muted-foreground">
             {item.body}
           </p>
         </div>
