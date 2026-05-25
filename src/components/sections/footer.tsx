@@ -5,6 +5,7 @@ import type { ComponentProps, ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { Instagram, Linkedin, Youtube, ArrowUp } from "lucide-react";
 import { SignatureLogo } from "@/components/ui/signature-logo";
+import { SparklesCore } from "@/components/ui/sparkles";
 import { cn } from "@/lib/utils";
 
 /* -------------------------------------------------------------------------- */
@@ -69,7 +70,7 @@ export function Footer() {
   return (
     <footer
       className={cn(
-        "relative w-full max-w-6xl mx-auto mt-20 md:mt-32",
+        "relative w-full max-w-6xl mx-auto mt-20 md:mt-32 overflow-hidden",
         "flex flex-col items-center justify-center",
         "rounded-t-[32px] md:rounded-t-[48px]",
         "border-t border-border",
@@ -80,10 +81,33 @@ export function Footer() {
           "radial-gradient(45% 140px at 50% 0%, rgba(245,245,240,0.08), transparent)",
       }}
     >
+      {/* Sparkles background — soft particle field, masked to fade at edges */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-0"
+        style={{
+          maskImage:
+            "radial-gradient(70% 80% at 50% 50%, black 35%, transparent 100%)",
+          WebkitMaskImage:
+            "radial-gradient(70% 80% at 50% 50%, black 35%, transparent 100%)",
+        }}
+      >
+        <SparklesCore
+          id="footer-sparkles"
+          background="transparent"
+          minSize={0.3}
+          maxSize={1.1}
+          particleDensity={70}
+          particleColor="#F5F5F0"
+          speed={0.8}
+          className="w-full h-full"
+        />
+      </div>
+
       {/* Top blur highlight */}
       <div
         aria-hidden
-        className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 h-px w-1/3 rounded-full"
+        className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 h-px w-1/3 rounded-full z-10"
         style={{
           background:
             "linear-gradient(90deg, transparent, rgba(245,245,240,0.45), transparent)",
@@ -91,7 +115,7 @@ export function Footer() {
         }}
       />
 
-      <div className="grid w-full gap-10 xl:grid-cols-3 xl:gap-10">
+      <div className="relative z-10 grid w-full gap-10 xl:grid-cols-3 xl:gap-10">
         {/* Brand block */}
         <AnimatedContainer className="flex flex-col gap-5">
           <SignatureLogo
@@ -148,7 +172,7 @@ export function Footer() {
       </div>
 
       {/* Bottom bar */}
-      <div className="mt-14 md:mt-20 w-full pt-6 border-t border-border flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-[11px] tracking-[0.28em] uppercase text-subtle-foreground">
+      <div className="relative z-10 mt-14 md:mt-20 w-full pt-6 border-t border-border flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-[11px] tracking-[0.28em] uppercase text-subtle-foreground">
         <span>
           © {new Date().getFullYear()} Rabi Adli · All rights reserved
         </span>
