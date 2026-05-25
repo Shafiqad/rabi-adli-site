@@ -56,7 +56,6 @@ const FOOTER_SECTIONS: FooterSection[] = [
     links: [
       { title: "Privacy", href: "/privacy" },
       { title: "Algemene voorwaarden", href: "/voorwaarden" },
-      { title: "Imprint", href: "/imprint" },
     ],
   },
 ];
