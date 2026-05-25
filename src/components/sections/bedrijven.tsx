@@ -84,18 +84,6 @@ const BEDRIJVEN: Bedrijf[] = [
     accentRgb: "212,88,88",
     cta: "Ontdek Moneyfesto",
   },
-  {
-    id: "brandaura",
-    name: "Brandaura",
-    label: "Personal Brand",
-    tagline: "Autoriteit gebouwd met intentie.",
-    body: "Voor ondernemers die hun persoonlijk merk willen bouwen met dezelfde scherpte als hun bedrijf. Brandaura helpt founders en professionals een merk te creëren dat substantie heeft — niet alleen bereik.",
-    focus: ["Branding", "Positionering", "Content"],
-    href: "#",
-    logo: "/images/brandaura-logo.svg",
-    accentRgb: "195,75,75",
-    cta: "Bekijk Brandaura",
-  },
 ];
 
 const EASE = [0.22, 1, 0.36, 1] as const;

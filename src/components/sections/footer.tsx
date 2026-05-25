@@ -41,7 +41,6 @@ const FOOTER_SECTIONS: FooterSection[] = [
       { title: "Geldinstituut", href: "#bedrijven" },
       { title: "Vosgoldberg", href: "#bedrijven" },
       { title: "Moneyfesto", href: "#bedrijven" },
-      { title: "Brandaura", href: "#bedrijven" },
     ],
   },
   {
