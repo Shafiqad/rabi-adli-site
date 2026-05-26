@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import { ArrowUpRight, X } from "lucide-react";
 import { Reveal } from "@/components/reveal";
 import { cn } from "@/lib/utils";
@@ -11,8 +11,9 @@ import { cn } from "@/lib/utils";
 /*  Bedrijven — Rabi Adli ecosystem hub                                        */
 /*                                                                            */
 /*  Dark visual showing Rabi Adli centrally with his 4 brands as satellite     */
-/*  nodes connected by elegant oxblood lines. Lines stop cleanly at each       */
-/*  card's edge. Clicking a card opens a modal with the full explanation.      */
+/*  nodes connected by elegant oxblood lines that land EXACTLY on each card's  */
+/*  edge (per-card live measurement). Clicking a card expands it in-place to   */
+/*  reveal body + CTA. Click again (or the X) to collapse.                     */
 /* -------------------------------------------------------------------------- */
 
 interface Bedrijf {
@@ -32,7 +33,7 @@ const BEDRIJVEN: Bedrijf[] = [
     body:
       "Vos & Goldberg richt zich op accountancy, administratie en financiële structuur. Het bedrijf helpt ondernemers grip krijgen op hun cijfers, verplichtingen en financiële basis.",
     href: "https://www.vosgoldberg.nl/",
-    cta: "Meer over Vos & Goldberg",
+    cta: "Bekijk Vos & Goldberg",
   },
   {
     id: "compound-quadrant",
@@ -41,7 +42,7 @@ const BEDRIJVEN: Bedrijf[] = [
     body:
       "Compound Quadrant helpt ondernemers met strategie, groei en het bouwen van een sterker bedrijf. De focus ligt op ondernemerschap, structuur en betere zakelijke keuzes.",
     href: "https://compoundquadrant.nl/",
-    cta: "Ontdek Compound Quadrant",
+    cta: "Bekijk Compound Quadrant",
   },
   {
     id: "geldinstituut",
@@ -59,33 +60,27 @@ const BEDRIJVEN: Bedrijf[] = [
     body:
       "Moneyfesto is een business community voor mensen die anders willen leren kijken naar geld, groei, vrijheid en het systeem. Een omgeving voor visie, netwerk en ontwikkeling.",
     href: "https://moneyfesto.nl/",
-    cta: "Ontdek Moneyfesto",
+    cta: "Bekijk Moneyfesto",
   },
 ];
 
 /* -------------------------------------------------------------------------- */
-/*  Layout constants — everything is authored in the SVG viewBox space        */
-/*  (1200 × 620). The container uses the same aspect ratio so positions       */
-/*  match exactly across the SVG and the DOM-positioned cards.                */
+/*  Geometry                                                                    */
 /* -------------------------------------------------------------------------- */
 
 const VB_W = 1200;
 const VB_H = 620;
 const CENTER = { x: VB_W / 2, y: VB_H / 2 };
 
-/* Card + portrait dimensions in *CSS pixels*. These get re-scaled into
- * viewBox units at render time based on the live container width, so the
- * lines always stop exactly at the card edge no matter how the container
- * is sized by Tailwind responsive constraints. */
-const PHOTO_RADIUS_PX = 95; // half of the 190px portrait
-const CARD_W_PX = 240;
-const CARD_H_PX = 86;
+const PHOTO_RADIUS_PX = 95;
+const CARD_W_COLLAPSED = 240;
+const CARD_W_EXPANDED = 360;
 
 const POSITIONS: Record<string, { x: number; y: number }> = {
-  vosgoldberg: { x: 230, y: 170 }, // top-left
-  "compound-quadrant": { x: 970, y: 170 }, // top-right
-  geldinstituut: { x: 230, y: 450 }, // bottom-left
-  moneyfesto: { x: 970, y: 450 }, // bottom-right
+  vosgoldberg: { x: 230, y: 170 },
+  "compound-quadrant": { x: 970, y: 170 },
+  geldinstituut: { x: 230, y: 450 },
+  moneyfesto: { x: 970, y: 450 },
 };
 
 const ACCENT = "#B83A3A";
@@ -94,17 +89,14 @@ const ACCENT_LINE_SOFT = "rgba(184,58,58,0.42)";
 const NOISE_URL =
   "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.96 0 0 0 0 0.94 0 0 0 0 0.88 0 0 0 0.04 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>\")";
 
-/* Compute clean line endpoints in viewBox space.
- *
- * `scale` = VB_W / actualContainerWidthPx. Multiplying CSS-pixel dimensions
- * by this scale gives the same dimension expressed in viewBox units, so
- * the line endpoints land exactly on the card's visible border regardless
- * of how the container is sized.
- */
+/* Compute the line endpoints in viewBox space using the live measured card
+ * dimensions (in CSS pixels) and the container-to-viewBox scale. */
 function lineEndpoints(
   nodeX: number,
   nodeY: number,
-  scale: number
+  scale: number,
+  cardWidthPx: number,
+  cardHeightPx: number
 ) {
   const dx = nodeX - CENTER.x;
   const dy = nodeY - CENTER.y;
@@ -113,14 +105,12 @@ function lineEndpoints(
   const uy = dy / len;
 
   const photoR = (PHOTO_RADIUS_PX + 2) * scale;
-  const halfW = (CARD_W_PX / 2) * scale;
-  const halfH = (CARD_H_PX / 2) * scale;
+  const halfW = (cardWidthPx / 2) * scale;
+  const halfH = (cardHeightPx / 2) * scale;
 
   const startX = CENTER.x + ux * photoR;
   const startY = CENTER.y + uy * photoR;
 
-  // Distance from card centre to the nearest card edge in the direction of
-  // the centre photo = min(halfW / |ux|, halfH / |uy|).
   const tx = halfW / Math.max(Math.abs(ux), 0.001);
   const ty = halfH / Math.max(Math.abs(uy), 0.001);
   const cardReach = Math.min(tx, ty);
@@ -137,28 +127,7 @@ function lineEndpoints(
 
 export function Bedrijven() {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [openId, setOpenId] = useState<string | null>(null);
-  const open = openId ? BEDRIJVEN.find((b) => b.id === openId) ?? null : null;
-
-  /* Close modal on Escape. */
-  useEffect(() => {
-    if (!openId) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpenId(null);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [openId]);
-
-  /* Lock body scroll while modal is open. */
-  useEffect(() => {
-    if (!openId) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [openId]);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   return (
     <section
@@ -197,24 +166,17 @@ export function Bedrijven() {
           <EcosystemVisual
             hoveredId={hoveredId}
             setHoveredId={setHoveredId}
-            onOpen={setOpenId}
+            expandedId={expandedId}
+            setExpandedId={setExpandedId}
           />
         </Reveal>
 
-        {/* Tiny helper line under the visual */}
         <Reveal delay={80}>
           <div className="mt-10 text-center text-[11px] tracking-[0.32em] uppercase text-subtle-foreground">
             Klik een bedrijf voor meer info
           </div>
         </Reveal>
       </div>
-
-      {/* ----- Modal — opens on card click ----- */}
-      <AnimatePresence>
-        {open && (
-          <BedrijfModal bedrijf={open} onClose={() => setOpenId(null)} />
-        )}
-      </AnimatePresence>
     </section>
   );
 }
@@ -226,18 +188,22 @@ export function Bedrijven() {
 function EcosystemVisual({
   hoveredId,
   setHoveredId,
-  onOpen,
+  expandedId,
+  setExpandedId,
 }: {
   hoveredId: string | null;
   setHoveredId: (id: string | null) => void;
-  onOpen: (id: string) => void;
+  expandedId: string | null;
+  setExpandedId: (id: string | null) => void;
 }) {
-  /* Measure the live container width so we can express the fixed-pixel card
-   * + portrait sizes in viewBox units. This keeps the line endpoints
-   * pinned to the card edge across any screen size. */
   const containerRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [scale, setScale] = useState(1);
+  const [cardSizes, setCardSizes] = useState<
+    Record<string, { w: number; h: number }>
+  >({});
 
+  // Track container width for viewBox scale.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -249,6 +215,34 @@ function EcosystemVisual({
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
+  }, []);
+
+  // Track each card's rendered size so the lines can stop on the live edge,
+  // including during the open/close expansion animation.
+  useEffect(() => {
+    const ros: ResizeObserver[] = [];
+    const update = (id: string) => {
+      const el = cardRefs.current[id];
+      if (!el) return;
+      setCardSizes((prev) => {
+        const next = prev[id];
+        if (next && next.w === el.offsetWidth && next.h === el.offsetHeight) {
+          return prev;
+        }
+        return { ...prev, [id]: { w: el.offsetWidth, h: el.offsetHeight } };
+      });
+    };
+
+    BEDRIJVEN.forEach((b) => {
+      const el = cardRefs.current[b.id];
+      if (!el) return;
+      update(b.id);
+      const ro = new ResizeObserver(() => update(b.id));
+      ro.observe(el);
+      ros.push(ro);
+    });
+
+    return () => ros.forEach((r) => r.disconnect());
   }, []);
 
   return (
@@ -303,8 +297,12 @@ function EcosystemVisual({
           >
             {BEDRIJVEN.map((b, i) => {
               const pos = POSITIONS[b.id];
-              const ep = lineEndpoints(pos.x, pos.y, scale);
-              const isActive = hoveredId === b.id;
+              const size = cardSizes[b.id] ?? {
+                w: CARD_W_COLLAPSED,
+                h: 86,
+              };
+              const ep = lineEndpoints(pos.x, pos.y, scale, size.w, size.h);
+              const isActive = hoveredId === b.id || expandedId === b.id;
               return (
                 <motion.path
                   key={b.id}
@@ -331,7 +329,7 @@ function EcosystemVisual({
           </svg>
 
           {/* Centre portrait */}
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center">
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center pointer-events-none">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
@@ -339,7 +337,7 @@ function EcosystemVisual({
               transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
               className="relative w-[190px] h-[190px] rounded-full overflow-hidden border bg-[#111111] transition-all duration-500"
               style={{
-                borderColor: hoveredId
+                borderColor: hoveredId || expandedId
                   ? "rgba(184,58,58,0.60)"
                   : "rgba(184,58,58,0.38)",
                 boxShadow:
@@ -381,20 +379,17 @@ function EcosystemVisual({
             </motion.div>
           </div>
 
-          {/* Brand nodes — click opens modal */}
+          {/* Brand cards — click expands in place */}
           {BEDRIJVEN.map((b, i) => {
             const pos = POSITIONS[b.id];
-            const isActive = hoveredId === b.id;
+            const isActive = hoveredId === b.id || expandedId === b.id;
+            const isExpanded = expandedId === b.id;
             return (
-              <motion.button
+              <motion.div
                 key={b.id}
-                type="button"
-                onMouseEnter={() => setHoveredId(b.id)}
-                onMouseLeave={() => setHoveredId(null)}
-                onFocus={() => setHoveredId(b.id)}
-                onBlur={() => setHoveredId(null)}
-                onClick={() => onOpen(b.id)}
-                aria-label={`Open ${b.name} details`}
+                ref={(node) => {
+                  cardRefs.current[b.id] = node;
+                }}
                 initial={{ opacity: 0, scale: 0.95 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true, margin: "-100px" }}
@@ -404,38 +399,94 @@ function EcosystemVisual({
                   ease: [0.22, 1, 0.36, 1],
                 }}
                 className={cn(
-                  "absolute z-30 text-left rounded-[18px] backdrop-blur-md px-6 py-5 border transition-all duration-500 cursor-pointer",
-                  "hover:-translate-y-[2px]"
+                  "absolute z-30 rounded-[18px] backdrop-blur-md border overflow-hidden",
+                  "transition-[width,border-color,background-color,box-shadow] duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
                 )}
                 style={{
-                  width: CARD_W_PX, // exact match with line-stop calculation
+                  width: isExpanded ? CARD_W_EXPANDED : CARD_W_COLLAPSED,
                   left: `${(pos.x / VB_W) * 100}%`,
                   top: `${(pos.y / VB_H) * 100}%`,
                   transform: "translate(-50%, -50%)",
                   borderColor: isActive
                     ? "rgba(184,58,58,0.55)"
                     : "rgba(255,255,255,0.10)",
-                  backgroundColor: isActive
+                  backgroundColor: isExpanded
+                    ? "rgba(13,13,13,0.97)"
+                    : isActive
                     ? "rgba(17,17,17,0.95)"
                     : "rgba(17,17,17,0.82)",
-                  boxShadow: isActive
+                  boxShadow: isExpanded
+                    ? "0 40px 100px -20px rgba(0,0,0,0.9), 0 0 0 1px rgba(184,58,58,0.18)"
+                    : isActive
                     ? "0 30px 80px -20px rgba(0,0,0,0.85), 0 0 0 1px rgba(184,58,58,0.18)"
                     : "none",
+                  zIndex: isExpanded ? 50 : 30,
                 }}
+                onMouseEnter={() => setHoveredId(b.id)}
+                onMouseLeave={() => setHoveredId(null)}
               >
-                <div className="font-serif text-foreground text-[20px] leading-tight">
-                  {b.name}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setExpandedId(isExpanded ? null : b.id)
+                  }
+                  className="block w-full text-left px-6 py-5 cursor-pointer"
+                  aria-expanded={isExpanded}
+                  aria-controls={`bedrijf-panel-${b.id}`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="font-serif text-foreground text-[20px] leading-tight">
+                        {b.name}
+                      </div>
+                      <div className="mt-1.5 text-[10px] tracking-[0.32em] uppercase font-medium text-accent">
+                        {b.label}
+                      </div>
+                    </div>
+                    {isExpanded && (
+                      <span
+                        aria-hidden
+                        className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/[0.10] text-foreground/70"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </span>
+                    )}
+                  </div>
+                </button>
+
+                {/* Expandable body + CTA */}
+                <div
+                  id={`bedrijf-panel-${b.id}`}
+                  aria-hidden={!isExpanded}
+                  className="overflow-hidden transition-[max-height,opacity] duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
+                  style={{
+                    maxHeight: isExpanded ? 360 : 0,
+                    opacity: isExpanded ? 1 : 0,
+                  }}
+                >
+                  <div className="px-6 pb-6 pt-1">
+                    <p className="text-[14px] leading-[1.65] text-muted-foreground">
+                      {b.body}
+                    </p>
+                    <a
+                      href={b.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="group mt-6 inline-flex items-center gap-2 text-[12.5px] tracking-[0.005em] text-foreground/90 hover:text-accent transition-colors duration-300"
+                    >
+                      {b.cta}
+                      <ArrowUpRight className="h-3.5 w-3.5 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform duration-500" />
+                    </a>
+                  </div>
                 </div>
-                <div className="mt-1.5 text-[10px] tracking-[0.32em] uppercase font-medium text-accent">
-                  {b.label}
-                </div>
-              </motion.button>
+              </motion.div>
             );
           })}
         </div>
       </div>
 
-      {/* ===== Mobile — vertical stack ===== */}
+      {/* ===== Mobile — vertical stack with same expand-in-place behavior ===== */}
       <div className="md:hidden">
         <div
           className="relative w-full rounded-[24px] border border-white/[0.08] overflow-hidden px-6 py-12"
@@ -484,118 +535,80 @@ function EcosystemVisual({
             }}
           />
 
-          {/* Tap-to-open node buttons */}
+          {/* Tap-to-expand cards */}
           <div className="space-y-3">
-            {BEDRIJVEN.map((b) => (
-              <button
-                key={b.id}
-                type="button"
-                onClick={() => onOpen(b.id)}
-                aria-label={`Open ${b.name} details`}
-                className="block w-full text-left rounded-[16px] border border-white/[0.10] bg-[rgba(17,17,17,0.82)] px-5 py-4 transition-all duration-300 active:bg-[rgba(17,17,17,0.95)] active:border-[rgba(184,58,58,0.55)]"
-              >
-                <div className="font-serif text-foreground text-[18px] leading-tight">
-                  {b.name}
+            {BEDRIJVEN.map((b) => {
+              const isExpanded = expandedId === b.id;
+              return (
+                <div
+                  key={b.id}
+                  className="rounded-[16px] border overflow-hidden transition-[border-color,background-color] duration-300"
+                  style={{
+                    borderColor: isExpanded
+                      ? "rgba(184,58,58,0.55)"
+                      : "rgba(255,255,255,0.10)",
+                    backgroundColor: isExpanded
+                      ? "rgba(13,13,13,0.97)"
+                      : "rgba(17,17,17,0.82)",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setExpandedId(isExpanded ? null : b.id)
+                    }
+                    aria-expanded={isExpanded}
+                    className="block w-full text-left px-5 py-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="font-serif text-foreground text-[18px] leading-tight">
+                          {b.name}
+                        </div>
+                        <div className="mt-1.5 text-[10px] tracking-[0.32em] uppercase font-medium text-accent">
+                          {b.label}
+                        </div>
+                      </div>
+                      {isExpanded && (
+                        <span
+                          aria-hidden
+                          className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/[0.10] text-foreground/70"
+                        >
+                          <X className="h-3 w-3" />
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                  <div
+                    aria-hidden={!isExpanded}
+                    className="overflow-hidden transition-[max-height,opacity] duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
+                    style={{
+                      maxHeight: isExpanded ? 360 : 0,
+                      opacity: isExpanded ? 1 : 0,
+                    }}
+                  >
+                    <div className="px-5 pb-5 pt-1">
+                      <p className="text-[14px] leading-[1.65] text-muted-foreground">
+                        {b.body}
+                      </p>
+                      <a
+                        href={b.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="group mt-5 inline-flex items-center gap-2 text-[12.5px] tracking-[0.005em] text-foreground/90 hover:text-accent transition-colors duration-300"
+                      >
+                        {b.cta}
+                        <ArrowUpRight className="h-3.5 w-3.5 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform duration-500" />
+                      </a>
+                    </div>
+                  </div>
                 </div>
-                <div className="mt-1.5 text-[10px] tracking-[0.32em] uppercase font-medium text-accent">
-                  {b.label}
-                </div>
-              </button>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
     </>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/*  Modal — opens when a brand is clicked                                      */
-/* -------------------------------------------------------------------------- */
-
-function BedrijfModal({
-  bedrijf,
-  onClose,
-}: {
-  bedrijf: Bedrijf;
-  onClose: () => void;
-}) {
-  return (
-    <motion.div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="bedrijf-modal-title"
-      className="fixed inset-0 z-[200] flex items-center justify-center px-5 py-10"
-    >
-      {/* Backdrop */}
-      <motion.button
-        type="button"
-        aria-label="Sluiten"
-        onClick={onClose}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.3 }}
-        className="absolute inset-0 bg-background/72"
-        style={{
-          backdropFilter: "blur(18px)",
-          WebkitBackdropFilter: "blur(18px)",
-        }}
-      />
-
-      {/* Card */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.94, y: 12 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.96, y: 8 }}
-        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        className="relative z-10 w-full max-w-[520px] rounded-[24px] border border-white/[0.10] bg-[#0d0d0d] px-7 py-9 md:px-9 md:py-11 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.9)]"
-        style={{
-          boxShadow:
-            "0 40px 100px -20px rgba(0,0,0,0.9), 0 0 0 1px rgba(184,58,58,0.10)",
-        }}
-      >
-        {/* Close button */}
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Sluit"
-          className="absolute top-5 right-5 flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.10] text-foreground/70 hover:text-foreground hover:border-white/[0.20] transition-colors duration-300"
-        >
-          <X className="h-4 w-4" />
-        </button>
-
-        {/* Eyebrow */}
-        <div className="text-[10px] tracking-[0.32em] uppercase font-medium text-accent">
-          {bedrijf.label}
-        </div>
-
-        {/* Title */}
-        <h3
-          id="bedrijf-modal-title"
-          className="mt-4 font-serif text-foreground text-[28px] md:text-[34px] leading-[1.1] tracking-[-0.005em]"
-        >
-          {bedrijf.name}
-        </h3>
-
-        {/* Body */}
-        <p className="mt-6 text-[15px] md:text-[16px] leading-[1.7] text-muted-foreground">
-          {bedrijf.body}
-        </p>
-
-        {/* CTA */}
-        <div className="mt-8 pt-7 border-t border-white/[0.06]">
-          <a
-            href={bedrijf.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group inline-flex items-center gap-2 text-[13px] tracking-[0.005em] text-foreground/90 hover:text-accent transition-colors duration-300"
-          >
-            {bedrijf.cta}
-            <ArrowUpRight className="h-3.5 w-3.5 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform duration-500" />
-          </a>
-        </div>
-      </motion.div>
-    </motion.div>
   );
 }
