@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 
 /* easeInOutQuart — natural pen motion (gentle approach, confident draw,
@@ -42,6 +42,14 @@ function sortSubpathsLeftToRight(pathData: string): string {
     .join(" ");
 }
 
+/* Pre-compute the sorted path once at module load — deterministic on both
+ * server and client, so no risk of hydration mismatch. */
+const SIGNATURE_PATH = sortSubpathsLeftToRight(SIGNATURE_PATH_RAW);
+
+/* Absolute safety ceiling — if anything goes sideways with the animation
+ * the preloader still gets out of the way. */
+const ABSOLUTE_FAIL_SAFE_MS = 6000;
+
 interface PreloaderProps {
   /** Skip on subsequent visits within the same browser session. */
   oncePerSession?: boolean;
@@ -69,12 +77,6 @@ export function Preloader({ oncePerSession = false }: PreloaderProps) {
   const [signatureDone, setSignatureDone] = useState(false);
   const pathRef = useRef<SVGPathElement | null>(null);
   const [pathLength, setPathLength] = useState(0);
-
-  // Pre-compute the sorted path once.
-  const SIGNATURE_PATH = useMemo(
-    () => sortSubpathsLeftToRight(SIGNATURE_PATH_RAW),
-    []
-  );
 
   // Measure total path length once on mount — needed for the
   // stroke-dasharray/-offset math.
@@ -122,8 +124,16 @@ export function Preloader({ oncePerSession = false }: PreloaderProps) {
     };
     raf = requestAnimationFrame(tick);
 
+    /* Absolute fail-safe — no matter what, hide the preloader within
+     * 6s so a bad ref / crashed RAF / weird browser quirk can never
+     * leave the user staring at a black screen. */
+    const failSafe = window.setTimeout(() => {
+      setVisible(false);
+    }, ABSOLUTE_FAIL_SAFE_MS);
+
     return () => {
       if (raf) cancelAnimationFrame(raf);
+      window.clearTimeout(failSafe);
     };
   }, [oncePerSession]);
 
@@ -154,14 +164,17 @@ export function Preloader({ oncePerSession = false }: PreloaderProps) {
                 <path
                   ref={pathRef}
                   d={SIGNATURE_PATH}
-                  fill="none"
+                  fill={signatureDone ? "#F5F5F0" : "none"}
+                  fillRule="evenodd"
                   stroke="#F5F5F0"
-                  strokeWidth={0.7}
+                  strokeWidth={signatureDone ? 0 : 1.2}
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   style={{
                     strokeDasharray: pathLength || 4000,
                     strokeDashoffset: (pathLength || 4000) * (1 - reveal),
+                    transition:
+                      "fill 600ms cubic-bezier(0.22,1,0.36,1), stroke-width 600ms cubic-bezier(0.22,1,0.36,1)",
                   }}
                 />
               </svg>
