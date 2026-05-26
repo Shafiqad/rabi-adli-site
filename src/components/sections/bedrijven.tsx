@@ -10,10 +10,11 @@ import { cn } from "@/lib/utils";
 /* -------------------------------------------------------------------------- */
 /*  Bedrijven — Rabi Adli ecosystem hub                                        */
 /*                                                                            */
-/*  Dark visual showing Rabi Adli centrally with his 4 brands as satellite     */
-/*  nodes connected by elegant oxblood lines that land EXACTLY on each card's  */
-/*  edge (per-card live measurement). Clicking a card expands it in-place to   */
-/*  reveal body + CTA. Click again (or the X) to collapse.                     */
+/*  Lines are computed in raw CSS pixels using each card's real DOM position   */
+/*  (via getBoundingClientRect) so the endpoints always land exactly on the    */
+/*  card edge regardless of viewport size or expansion state.                  */
+/*                                                                            */
+/*  Clicking a card expands it in-place (no modal) to reveal body + CTA.       */
 /* -------------------------------------------------------------------------- */
 
 interface Bedrijf {
@@ -65,61 +66,28 @@ const BEDRIJVEN: Bedrijf[] = [
 ];
 
 /* -------------------------------------------------------------------------- */
-/*  Geometry                                                                    */
+/*  Card placement                                                              */
 /* -------------------------------------------------------------------------- */
 
-const VB_W = 1200;
-const VB_H = 620;
-const CENTER = { x: VB_W / 2, y: VB_H / 2 };
+/* Position of each card's centre as a percentage of the container.
+ * The visual is built on a 1200×620 aspect grid; these percentages put each
+ * card in one of the four corners around the central portrait. */
+const CARD_POSITION_PCT: Record<string, { x: number; y: number }> = {
+  vosgoldberg: { x: 230 / 1200, y: 170 / 620 }, // top-left
+  "compound-quadrant": { x: 970 / 1200, y: 170 / 620 }, // top-right
+  geldinstituut: { x: 230 / 1200, y: 450 / 620 }, // bottom-left
+  moneyfesto: { x: 970 / 1200, y: 450 / 620 }, // bottom-right
+};
 
-const PHOTO_RADIUS_PX = 95;
+const PHOTO_RADIUS_PX = 95; // Half the portrait's diameter (190px)
 const CARD_W_COLLAPSED = 240;
 const CARD_W_EXPANDED = 360;
-
-const POSITIONS: Record<string, { x: number; y: number }> = {
-  vosgoldberg: { x: 230, y: 170 },
-  "compound-quadrant": { x: 970, y: 170 },
-  geldinstituut: { x: 230, y: 450 },
-  moneyfesto: { x: 970, y: 450 },
-};
 
 const ACCENT = "#B83A3A";
 const ACCENT_LINE_SOFT = "rgba(184,58,58,0.42)";
 
 const NOISE_URL =
   "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.96 0 0 0 0 0.94 0 0 0 0 0.88 0 0 0 0.04 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>\")";
-
-/* Compute the line endpoints in viewBox space using the live measured card
- * dimensions (in CSS pixels) and the container-to-viewBox scale. */
-function lineEndpoints(
-  nodeX: number,
-  nodeY: number,
-  scale: number,
-  cardWidthPx: number,
-  cardHeightPx: number
-) {
-  const dx = nodeX - CENTER.x;
-  const dy = nodeY - CENTER.y;
-  const len = Math.hypot(dx, dy) || 1;
-  const ux = dx / len;
-  const uy = dy / len;
-
-  const photoR = (PHOTO_RADIUS_PX + 2) * scale;
-  const halfW = (cardWidthPx / 2) * scale;
-  const halfH = (cardHeightPx / 2) * scale;
-
-  const startX = CENTER.x + ux * photoR;
-  const startY = CENTER.y + uy * photoR;
-
-  const tx = halfW / Math.max(Math.abs(ux), 0.001);
-  const ty = halfH / Math.max(Math.abs(uy), 0.001);
-  const cardReach = Math.min(tx, ty);
-
-  const endX = nodeX - ux * cardReach;
-  const endY = nodeY - uy * cardReach;
-
-  return { startX, startY, endX, endY };
-}
 
 /* -------------------------------------------------------------------------- */
 /*  Section                                                                    */
@@ -185,6 +153,13 @@ export function Bedrijven() {
 /*  Ecosystem visual                                                           */
 /* -------------------------------------------------------------------------- */
 
+interface CardRect {
+  cx: number;
+  cy: number;
+  w: number;
+  h: number;
+}
+
 function EcosystemVisual({
   hoveredId,
   setHoveredId,
@@ -198,52 +173,63 @@ function EcosystemVisual({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const [scale, setScale] = useState(1);
-  const [cardSizes, setCardSizes] = useState<
-    Record<string, { w: number; h: number }>
-  >({});
 
-  // Track container width for viewBox scale.
+  const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
+  const [cardRects, setCardRects] = useState<Record<string, CardRect>>({});
+
+  /* Measure container + each card in raw CSS pixels (relative to container).
+   * Re-runs on resize and whenever a card's size changes (open / close). */
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
     const measure = () => {
-      const w = el.offsetWidth;
-      if (w > 0) setScale(VB_W / w);
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
+      const cont = containerRef.current;
+      if (!cont) return;
+      const cRect = cont.getBoundingClientRect();
+      setContainerSize({ w: cRect.width, h: cRect.height });
 
-  // Track each card's rendered size so the lines can stop on the live edge,
-  // including during the open/close expansion animation.
-  useEffect(() => {
-    const ros: ResizeObserver[] = [];
-    const update = (id: string) => {
-      const el = cardRefs.current[id];
-      if (!el) return;
-      setCardSizes((prev) => {
-        const next = prev[id];
-        if (next && next.w === el.offsetWidth && next.h === el.offsetHeight) {
-          return prev;
-        }
-        return { ...prev, [id]: { w: el.offsetWidth, h: el.offsetHeight } };
+      setCardRects((prev) => {
+        let changed = false;
+        const next: Record<string, CardRect> = { ...prev };
+        BEDRIJVEN.forEach((b) => {
+          const el = cardRefs.current[b.id];
+          if (!el) return;
+          const r = el.getBoundingClientRect();
+          const fresh: CardRect = {
+            cx: r.left + r.width / 2 - cRect.left,
+            cy: r.top + r.height / 2 - cRect.top,
+            w: r.width,
+            h: r.height,
+          };
+          const cur = prev[b.id];
+          if (
+            !cur ||
+            Math.abs(cur.cx - fresh.cx) > 0.5 ||
+            Math.abs(cur.cy - fresh.cy) > 0.5 ||
+            Math.abs(cur.w - fresh.w) > 0.5 ||
+            Math.abs(cur.h - fresh.h) > 0.5
+          ) {
+            next[b.id] = fresh;
+            changed = true;
+          }
+        });
+        return changed ? next : prev;
       });
     };
 
+    measure();
+
+    const ro = new ResizeObserver(measure);
+    if (containerRef.current) ro.observe(containerRef.current);
     BEDRIJVEN.forEach((b) => {
       const el = cardRefs.current[b.id];
-      if (!el) return;
-      update(b.id);
-      const ro = new ResizeObserver(() => update(b.id));
-      ro.observe(el);
-      ros.push(ro);
+      if (el) ro.observe(el);
     });
 
-    return () => ros.forEach((r) => r.disconnect());
+    return () => ro.disconnect();
   }, []);
+
+  /* Photo lives at the geometric centre of the container. */
+  const photoCx = containerSize.w / 2;
+  const photoCy = containerSize.h / 2;
 
   return (
     <>
@@ -253,32 +239,34 @@ function EcosystemVisual({
           ref={containerRef}
           className="relative w-full max-w-[1200px] mx-auto rounded-[32px] border border-white/[0.08] overflow-hidden"
           style={{
-            aspectRatio: `${VB_W} / ${VB_H}`,
+            aspectRatio: `1200 / 620`,
             background:
               "radial-gradient(60% 60% at 50% 50%, rgba(184,58,58,0.06), transparent 65%), #050505",
           }}
         >
-          {/* Concentric guide circles */}
-          <svg
-            className="absolute inset-0 w-full h-full pointer-events-none"
-            viewBox={`0 0 ${VB_W} ${VB_H}`}
-            preserveAspectRatio="none"
-            aria-hidden
-          >
-            {[200, 320, 440].map((r) => (
-              <circle
-                key={r}
-                cx={CENTER.x}
-                cy={CENTER.y}
-                r={r}
-                fill="none"
-                stroke="rgba(255,255,255,0.030)"
-                strokeWidth={1}
-              />
-            ))}
-          </svg>
+          {/* Concentric guide circles (pixel-space) */}
+          {containerSize.w > 0 && (
+            <svg
+              className="absolute inset-0 w-full h-full pointer-events-none"
+              width={containerSize.w}
+              height={containerSize.h}
+              aria-hidden
+            >
+              {[200, 320, 440].map((r) => (
+                <circle
+                  key={r}
+                  cx={photoCx}
+                  cy={photoCy}
+                  r={r * (containerSize.w / 1200)}
+                  fill="none"
+                  stroke="rgba(255,255,255,0.030)"
+                  strokeWidth={1}
+                />
+              ))}
+            </svg>
+          )}
 
-          {/* Subtle noise */}
+          {/* Noise overlay */}
           <div
             aria-hidden
             className="absolute inset-0 pointer-events-none mix-blend-overlay opacity-[0.18]"
@@ -288,45 +276,63 @@ function EcosystemVisual({
             }}
           />
 
-          {/* Connection lines */}
-          <svg
-            className="absolute inset-0 w-full h-full pointer-events-none"
-            viewBox={`0 0 ${VB_W} ${VB_H}`}
-            preserveAspectRatio="none"
-            aria-hidden
-          >
-            {BEDRIJVEN.map((b, i) => {
-              const pos = POSITIONS[b.id];
-              const size = cardSizes[b.id] ?? {
-                w: CARD_W_COLLAPSED,
-                h: 86,
-              };
-              const ep = lineEndpoints(pos.x, pos.y, scale, size.w, size.h);
-              const isActive = hoveredId === b.id || expandedId === b.id;
-              return (
-                <motion.path
-                  key={b.id}
-                  d={`M ${ep.startX} ${ep.startY} L ${ep.endX} ${ep.endY}`}
-                  fill="none"
-                  stroke={isActive ? ACCENT : ACCENT_LINE_SOFT}
-                  strokeWidth={isActive ? 1.6 : 1}
-                  strokeLinecap="round"
-                  initial={{ pathLength: 0, opacity: 0 }}
-                  whileInView={{ pathLength: 1, opacity: 1 }}
-                  viewport={{ once: true, margin: "-100px" }}
-                  transition={{
-                    duration: 0.95,
-                    ease: [0.22, 1, 0.36, 1],
-                    delay: 0.35 + i * 0.08,
-                    opacity: { duration: 0.3, delay: 0.35 + i * 0.08 },
-                  }}
-                  style={{
-                    transition: "stroke 350ms ease, stroke-width 350ms ease",
-                  }}
-                />
-              );
-            })}
-          </svg>
+          {/* Connection lines — pixel-space, computed from live card rects */}
+          {containerSize.w > 0 && (
+            <svg
+              className="absolute inset-0 w-full h-full pointer-events-none"
+              width={containerSize.w}
+              height={containerSize.h}
+              aria-hidden
+            >
+              {BEDRIJVEN.map((b, i) => {
+                const card = cardRects[b.id];
+                if (!card) return null;
+                const dx = card.cx - photoCx;
+                const dy = card.cy - photoCy;
+                const len = Math.hypot(dx, dy) || 1;
+                const ux = dx / len;
+                const uy = dy / len;
+
+                const startX = photoCx + ux * (PHOTO_RADIUS_PX + 2);
+                const startY = photoCy + uy * (PHOTO_RADIUS_PX + 2);
+
+                const halfW = card.w / 2;
+                const halfH = card.h / 2;
+                const tx = halfW / Math.max(Math.abs(ux), 0.001);
+                const ty = halfH / Math.max(Math.abs(uy), 0.001);
+                const reach = Math.min(tx, ty);
+
+                const endX = card.cx - ux * reach;
+                const endY = card.cy - uy * reach;
+
+                const isActive =
+                  hoveredId === b.id || expandedId === b.id;
+                return (
+                  <motion.path
+                    key={b.id}
+                    d={`M ${startX} ${startY} L ${endX} ${endY}`}
+                    fill="none"
+                    stroke={isActive ? ACCENT : ACCENT_LINE_SOFT}
+                    strokeWidth={isActive ? 1.6 : 1}
+                    strokeLinecap="round"
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    whileInView={{ pathLength: 1, opacity: 1 }}
+                    viewport={{ once: true, margin: "-100px" }}
+                    transition={{
+                      duration: 0.95,
+                      ease: [0.22, 1, 0.36, 1],
+                      delay: 0.35 + i * 0.08,
+                      opacity: { duration: 0.3, delay: 0.35 + i * 0.08 },
+                    }}
+                    style={{
+                      transition:
+                        "stroke 350ms ease, stroke-width 350ms ease",
+                    }}
+                  />
+                );
+              })}
+            </svg>
+          )}
 
           {/* Centre portrait */}
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center pointer-events-none">
@@ -337,9 +343,10 @@ function EcosystemVisual({
               transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
               className="relative w-[190px] h-[190px] rounded-full overflow-hidden border bg-[#111111] transition-all duration-500"
               style={{
-                borderColor: hoveredId || expandedId
-                  ? "rgba(184,58,58,0.60)"
-                  : "rgba(184,58,58,0.38)",
+                borderColor:
+                  hoveredId || expandedId
+                    ? "rgba(184,58,58,0.60)"
+                    : "rgba(184,58,58,0.38)",
                 boxShadow:
                   "0 30px 80px -20px rgba(0,0,0,0.85), 0 0 0 6px rgba(184,58,58,0.06)",
               }}
@@ -381,7 +388,7 @@ function EcosystemVisual({
 
           {/* Brand cards — click expands in place */}
           {BEDRIJVEN.map((b, i) => {
-            const pos = POSITIONS[b.id];
+            const pos = CARD_POSITION_PCT[b.id];
             const isActive = hoveredId === b.id || expandedId === b.id;
             const isExpanded = expandedId === b.id;
             return (
@@ -399,13 +406,13 @@ function EcosystemVisual({
                   ease: [0.22, 1, 0.36, 1],
                 }}
                 className={cn(
-                  "absolute z-30 rounded-[18px] backdrop-blur-md border overflow-hidden",
+                  "absolute rounded-[18px] backdrop-blur-md border overflow-hidden",
                   "transition-[width,border-color,background-color,box-shadow] duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
                 )}
                 style={{
                   width: isExpanded ? CARD_W_EXPANDED : CARD_W_COLLAPSED,
-                  left: `${(pos.x / VB_W) * 100}%`,
-                  top: `${(pos.y / VB_H) * 100}%`,
+                  left: `${pos.x * 100}%`,
+                  top: `${pos.y * 100}%`,
                   transform: "translate(-50%, -50%)",
                   borderColor: isActive
                     ? "rgba(184,58,58,0.55)"
@@ -427,10 +434,8 @@ function EcosystemVisual({
               >
                 <button
                   type="button"
-                  onClick={() =>
-                    setExpandedId(isExpanded ? null : b.id)
-                  }
-                  className="block w-full text-left px-6 py-5 cursor-pointer"
+                  onClick={() => setExpandedId(isExpanded ? null : b.id)}
+                  className="block w-full text-left px-6 py-5 cursor-pointer outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-0"
                   aria-expanded={isExpanded}
                   aria-controls={`bedrijf-panel-${b.id}`}
                 >
@@ -458,13 +463,13 @@ function EcosystemVisual({
                 <div
                   id={`bedrijf-panel-${b.id}`}
                   aria-hidden={!isExpanded}
-                  className="overflow-hidden transition-[max-height,opacity] duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
+                  className="overflow-hidden transition-[max-height,opacity] duration-[500ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
                   style={{
-                    maxHeight: isExpanded ? 360 : 0,
+                    maxHeight: isExpanded ? 600 : 0,
                     opacity: isExpanded ? 1 : 0,
                   }}
                 >
-                  <div className="px-6 pb-6 pt-1">
+                  <div className="px-6 pb-6 pt-2">
                     <p className="text-[14px] leading-[1.65] text-muted-foreground">
                       {b.body}
                     </p>
@@ -558,7 +563,7 @@ function EcosystemVisual({
                       setExpandedId(isExpanded ? null : b.id)
                     }
                     aria-expanded={isExpanded}
-                    className="block w-full text-left px-5 py-4"
+                    className="block w-full text-left px-5 py-4 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
@@ -581,9 +586,9 @@ function EcosystemVisual({
                   </button>
                   <div
                     aria-hidden={!isExpanded}
-                    className="overflow-hidden transition-[max-height,opacity] duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
+                    className="overflow-hidden transition-[max-height,opacity] duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
                     style={{
-                      maxHeight: isExpanded ? 360 : 0,
+                      maxHeight: isExpanded ? 600 : 0,
                       opacity: isExpanded ? 1 : 0,
                     }}
                   >
