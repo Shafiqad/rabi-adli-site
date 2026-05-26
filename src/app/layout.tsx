@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { GlobalCursor } from "@/components/ui/global-cursor";
-// Preloader is currently disabled — re-enable once signature-draw is debugged.
-// import { Preloader } from "@/components/ui/preloader";
+import { Preloader } from "@/components/ui/preloader";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -42,6 +41,7 @@ export default function RootLayout({
       className={`${inter.variable} ${playfair.variable} antialiased`}
     >
       <body className="min-h-screen bg-background text-foreground font-sans selection:bg-accent selection:text-background">
+        <Preloader />
         {children}
         <GlobalCursor />
       </body>
