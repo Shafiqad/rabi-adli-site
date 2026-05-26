@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowUpRight, X } from "lucide-react";
 import { Reveal } from "@/components/reveal";
@@ -72,10 +72,14 @@ const BEDRIJVEN: Bedrijf[] = [
 const VB_W = 1200;
 const VB_H = 620;
 const CENTER = { x: VB_W / 2, y: VB_H / 2 };
-const PHOTO_RADIUS = 95; // half of the 190px portrait
-const CARD_HALF_W = 120; // ~half of the 240px card width
-const CARD_HALF_H = 38; // ~half of card height
-const LINE_PADDING = 6; // gap between line tip and card edge
+
+/* Card + portrait dimensions in *CSS pixels*. These get re-scaled into
+ * viewBox units at render time based on the live container width, so the
+ * lines always stop exactly at the card edge no matter how the container
+ * is sized by Tailwind responsive constraints. */
+const PHOTO_RADIUS_PX = 95; // half of the 190px portrait
+const CARD_W_PX = 240;
+const CARD_H_PX = 86;
 
 const POSITIONS: Record<string, { x: number; y: number }> = {
   vosgoldberg: { x: 230, y: 170 }, // top-left
@@ -90,23 +94,36 @@ const ACCENT_LINE_SOFT = "rgba(184,58,58,0.42)";
 const NOISE_URL =
   "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.96 0 0 0 0 0.94 0 0 0 0 0.88 0 0 0 0.04 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>\")";
 
-/* Compute clean line endpoints — start just outside the centre photo,
- * stop just outside the card's bounding rectangle. */
-function lineEndpoints(nodeX: number, nodeY: number) {
+/* Compute clean line endpoints in viewBox space.
+ *
+ * `scale` = VB_W / actualContainerWidthPx. Multiplying CSS-pixel dimensions
+ * by this scale gives the same dimension expressed in viewBox units, so
+ * the line endpoints land exactly on the card's visible border regardless
+ * of how the container is sized.
+ */
+function lineEndpoints(
+  nodeX: number,
+  nodeY: number,
+  scale: number
+) {
   const dx = nodeX - CENTER.x;
   const dy = nodeY - CENTER.y;
   const len = Math.hypot(dx, dy) || 1;
   const ux = dx / len;
   const uy = dy / len;
 
-  const startX = CENTER.x + ux * (PHOTO_RADIUS + 4);
-  const startY = CENTER.y + uy * (PHOTO_RADIUS + 4);
+  const photoR = (PHOTO_RADIUS_PX + 2) * scale;
+  const halfW = (CARD_W_PX / 2) * scale;
+  const halfH = (CARD_H_PX / 2) * scale;
 
-  // Distance from card centre to the rectangle edge along the (-ux, -uy)
-  // direction = min(halfWidth / |ux|, halfHeight / |uy|).
-  const tx = CARD_HALF_W / Math.max(Math.abs(ux), 0.001);
-  const ty = CARD_HALF_H / Math.max(Math.abs(uy), 0.001);
-  const cardReach = Math.min(tx, ty) + LINE_PADDING;
+  const startX = CENTER.x + ux * photoR;
+  const startY = CENTER.y + uy * photoR;
+
+  // Distance from card centre to the nearest card edge in the direction of
+  // the centre photo = min(halfW / |ux|, halfH / |uy|).
+  const tx = halfW / Math.max(Math.abs(ux), 0.001);
+  const ty = halfH / Math.max(Math.abs(uy), 0.001);
+  const cardReach = Math.min(tx, ty);
 
   const endX = nodeX - ux * cardReach;
   const endY = nodeY - uy * cardReach;
@@ -215,11 +232,31 @@ function EcosystemVisual({
   setHoveredId: (id: string | null) => void;
   onOpen: (id: string) => void;
 }) {
+  /* Measure the live container width so we can express the fixed-pixel card
+   * + portrait sizes in viewBox units. This keeps the line endpoints
+   * pinned to the card edge across any screen size. */
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const measure = () => {
+      const w = el.offsetWidth;
+      if (w > 0) setScale(VB_W / w);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   return (
     <>
       {/* ===== Desktop / tablet ===== */}
       <div className="hidden md:block">
         <div
+          ref={containerRef}
           className="relative w-full max-w-[1200px] mx-auto rounded-[32px] border border-white/[0.08] overflow-hidden"
           style={{
             aspectRatio: `${VB_W} / ${VB_H}`,
@@ -266,7 +303,7 @@ function EcosystemVisual({
           >
             {BEDRIJVEN.map((b, i) => {
               const pos = POSITIONS[b.id];
-              const ep = lineEndpoints(pos.x, pos.y);
+              const ep = lineEndpoints(pos.x, pos.y, scale);
               const isActive = hoveredId === b.id;
               return (
                 <motion.path
@@ -371,7 +408,7 @@ function EcosystemVisual({
                   "hover:-translate-y-[2px]"
                 )}
                 style={{
-                  width: CARD_HALF_W * 2, // exact match with line-stop calculation
+                  width: CARD_W_PX, // exact match with line-stop calculation
                   left: `${(pos.x / VB_W) * 100}%`,
                   top: `${(pos.y / VB_H) * 100}%`,
                   transform: "translate(-50%, -50%)",
