@@ -1,18 +1,18 @@
 "use client";
 
 import * as React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, X } from "lucide-react";
 import { Reveal } from "@/components/reveal";
 import { cn } from "@/lib/utils";
 
 /* -------------------------------------------------------------------------- */
 /*  Bedrijven — Rabi Adli ecosystem hub                                        */
 /*                                                                            */
-/*  Premium dark visual showing Rabi Adli centrally with his 4 brands as       */
-/*  satellite nodes connected by elegant oxblood lines. Hover/tap a node to    */
-/*  see that brand's explanation inline beneath the visual.                    */
+/*  Dark visual showing Rabi Adli centrally with his 4 brands as satellite     */
+/*  nodes connected by elegant oxblood lines. Lines stop cleanly at each       */
+/*  card's edge. Clicking a card opens a modal with the full explanation.      */
 /* -------------------------------------------------------------------------- */
 
 interface Bedrijf {
@@ -63,8 +63,20 @@ const BEDRIJVEN: Bedrijf[] = [
   },
 ];
 
-/* Node positions in the visual's coordinate space (viewBox 1200 × 620).
- * Each node sits at one of the four corners around the centred portrait. */
+/* -------------------------------------------------------------------------- */
+/*  Layout constants — everything is authored in the SVG viewBox space        */
+/*  (1200 × 620). The container uses the same aspect ratio so positions       */
+/*  match exactly across the SVG and the DOM-positioned cards.                */
+/* -------------------------------------------------------------------------- */
+
+const VB_W = 1200;
+const VB_H = 620;
+const CENTER = { x: VB_W / 2, y: VB_H / 2 };
+const PHOTO_RADIUS = 95; // half of the 190px portrait
+const CARD_HALF_W = 120; // ~half of the 240px card width
+const CARD_HALF_H = 38; // ~half of card height
+const LINE_PADDING = 6; // gap between line tip and card edge
+
 const POSITIONS: Record<string, { x: number; y: number }> = {
   vosgoldberg: { x: 230, y: 170 }, // top-left
   "compound-quadrant": { x: 970, y: 170 }, // top-right
@@ -72,23 +84,64 @@ const POSITIONS: Record<string, { x: number; y: number }> = {
   moneyfesto: { x: 970, y: 450 }, // bottom-right
 };
 
-const CENTER = { x: 600, y: 310 };
-
 const ACCENT = "#B83A3A";
-const ACCENT_LINE_SOFT = "rgba(184,58,58,0.40)";
+const ACCENT_LINE_SOFT = "rgba(184,58,58,0.42)";
 
 const NOISE_URL =
   "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.96 0 0 0 0 0.94 0 0 0 0 0.88 0 0 0 0.04 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>\")";
+
+/* Compute clean line endpoints — start just outside the centre photo,
+ * stop just outside the card's bounding rectangle. */
+function lineEndpoints(nodeX: number, nodeY: number) {
+  const dx = nodeX - CENTER.x;
+  const dy = nodeY - CENTER.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const ux = dx / len;
+  const uy = dy / len;
+
+  const startX = CENTER.x + ux * (PHOTO_RADIUS + 4);
+  const startY = CENTER.y + uy * (PHOTO_RADIUS + 4);
+
+  // Distance from card centre to the rectangle edge along the (-ux, -uy)
+  // direction = min(halfWidth / |ux|, halfHeight / |uy|).
+  const tx = CARD_HALF_W / Math.max(Math.abs(ux), 0.001);
+  const ty = CARD_HALF_H / Math.max(Math.abs(uy), 0.001);
+  const cardReach = Math.min(tx, ty) + LINE_PADDING;
+
+  const endX = nodeX - ux * cardReach;
+  const endY = nodeY - uy * cardReach;
+
+  return { startX, startY, endX, endY };
+}
 
 /* -------------------------------------------------------------------------- */
 /*  Section                                                                    */
 /* -------------------------------------------------------------------------- */
 
 export function Bedrijven() {
-  // Selected = which brand's detail is currently visible in the panel.
-  // Defaults to the first brand so the panel is never empty.
-  const [selectedId, setSelectedId] = useState<string>(BEDRIJVEN[0].id);
-  const selected = BEDRIJVEN.find((b) => b.id === selectedId) ?? BEDRIJVEN[0];
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const open = openId ? BEDRIJVEN.find((b) => b.id === openId) ?? null : null;
+
+  /* Close modal on Escape. */
+  useEffect(() => {
+    if (!openId) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpenId(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [openId]);
+
+  /* Lock body scroll while modal is open. */
+  useEffect(() => {
+    if (!openId) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [openId]);
 
   return (
     <section
@@ -125,77 +178,59 @@ export function Bedrijven() {
         {/* ----- Ecosystem visual ----- */}
         <Reveal delay={120}>
           <EcosystemVisual
-            selectedId={selectedId}
-            setSelectedId={setSelectedId}
+            hoveredId={hoveredId}
+            setHoveredId={setHoveredId}
+            onOpen={setOpenId}
           />
         </Reveal>
 
-        {/* ----- Inline detail panel — shows the selected brand ----- */}
+        {/* Tiny helper line under the visual */}
         <Reveal delay={80}>
-          <div className="mt-10 md:mt-12 max-w-3xl mx-auto px-2">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={selected.id}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                className="text-center"
-              >
-                <span className="text-[11px] tracking-[0.32em] uppercase font-medium text-accent">
-                  {selected.label}
-                </span>
-                <h3 className="mt-4 font-serif text-foreground text-[26px] md:text-[34px] leading-[1.1] tracking-[-0.005em]">
-                  {selected.name}
-                </h3>
-                <p className="mt-5 text-[15px] md:text-[16px] leading-[1.7] text-muted-foreground max-w-2xl mx-auto">
-                  {selected.body}
-                </p>
-                <a
-                  href={selected.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group mt-8 inline-flex items-center gap-2 text-[12.5px] tracking-[0.005em] text-foreground/90 hover:text-accent transition-colors duration-300"
-                >
-                  {selected.cta}
-                  <ArrowUpRight className="h-3.5 w-3.5 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform duration-500" />
-                </a>
-              </motion.div>
-            </AnimatePresence>
+          <div className="mt-10 text-center text-[11px] tracking-[0.32em] uppercase text-subtle-foreground">
+            Klik een bedrijf voor meer info
           </div>
         </Reveal>
       </div>
+
+      {/* ----- Modal — opens on card click ----- */}
+      <AnimatePresence>
+        {open && (
+          <BedrijfModal bedrijf={open} onClose={() => setOpenId(null)} />
+        )}
+      </AnimatePresence>
     </section>
   );
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Ecosystem visual — desktop hub-and-spoke; mobile vertical stack            */
+/*  Ecosystem visual                                                           */
 /* -------------------------------------------------------------------------- */
 
 function EcosystemVisual({
-  selectedId,
-  setSelectedId,
+  hoveredId,
+  setHoveredId,
+  onOpen,
 }: {
-  selectedId: string;
-  setSelectedId: (id: string) => void;
+  hoveredId: string | null;
+  setHoveredId: (id: string | null) => void;
+  onOpen: (id: string) => void;
 }) {
   return (
     <>
-      {/* ===== Desktop / tablet hub-and-spoke ===== */}
+      {/* ===== Desktop / tablet ===== */}
       <div className="hidden md:block">
         <div
           className="relative w-full max-w-[1200px] mx-auto rounded-[32px] border border-white/[0.08] overflow-hidden"
           style={{
-            minHeight: 620,
+            aspectRatio: `${VB_W} / ${VB_H}`,
             background:
-              "radial-gradient(60% 60% at 50% 50%, rgba(184,58,58,0.07), transparent 65%), #050505",
+              "radial-gradient(60% 60% at 50% 50%, rgba(184,58,58,0.06), transparent 65%), #050505",
           }}
         >
           {/* Concentric guide circles */}
           <svg
             className="absolute inset-0 w-full h-full pointer-events-none"
-            viewBox="0 0 1200 620"
+            viewBox={`0 0 ${VB_W} ${VB_H}`}
             preserveAspectRatio="none"
             aria-hidden
           >
@@ -206,13 +241,13 @@ function EcosystemVisual({
                 cy={CENTER.y}
                 r={r}
                 fill="none"
-                stroke="rgba(255,255,255,0.035)"
+                stroke="rgba(255,255,255,0.030)"
                 strokeWidth={1}
               />
             ))}
           </svg>
 
-          {/* Subtle noise overlay */}
+          {/* Subtle noise */}
           <div
             aria-hidden
             className="absolute inset-0 pointer-events-none mix-blend-overlay opacity-[0.18]"
@@ -222,20 +257,21 @@ function EcosystemVisual({
             }}
           />
 
-          {/* Connection lines — draw in once on scroll into view */}
+          {/* Connection lines */}
           <svg
             className="absolute inset-0 w-full h-full pointer-events-none"
-            viewBox="0 0 1200 620"
+            viewBox={`0 0 ${VB_W} ${VB_H}`}
             preserveAspectRatio="none"
             aria-hidden
           >
             {BEDRIJVEN.map((b, i) => {
               const pos = POSITIONS[b.id];
-              const isActive = selectedId === b.id;
+              const ep = lineEndpoints(pos.x, pos.y);
+              const isActive = hoveredId === b.id;
               return (
                 <motion.path
                   key={b.id}
-                  d={`M ${pos.x} ${pos.y} L ${CENTER.x} ${CENTER.y}`}
+                  d={`M ${ep.startX} ${ep.startY} L ${ep.endX} ${ep.endY}`}
                   fill="none"
                   stroke={isActive ? ACCENT : ACCENT_LINE_SOFT}
                   strokeWidth={isActive ? 1.6 : 1}
@@ -266,7 +302,9 @@ function EcosystemVisual({
               transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
               className="relative w-[190px] h-[190px] rounded-full overflow-hidden border bg-[#111111] transition-all duration-500"
               style={{
-                borderColor: "rgba(184,58,58,0.40)",
+                borderColor: hoveredId
+                  ? "rgba(184,58,58,0.60)"
+                  : "rgba(184,58,58,0.38)",
                 boxShadow:
                   "0 30px 80px -20px rgba(0,0,0,0.85), 0 0 0 6px rgba(184,58,58,0.06)",
               }}
@@ -306,18 +344,20 @@ function EcosystemVisual({
             </motion.div>
           </div>
 
-          {/* Brand nodes */}
+          {/* Brand nodes — click opens modal */}
           {BEDRIJVEN.map((b, i) => {
             const pos = POSITIONS[b.id];
-            const isActive = selectedId === b.id;
+            const isActive = hoveredId === b.id;
             return (
               <motion.button
                 key={b.id}
                 type="button"
-                onMouseEnter={() => setSelectedId(b.id)}
-                onFocus={() => setSelectedId(b.id)}
-                onClick={() => setSelectedId(b.id)}
-                aria-pressed={isActive}
+                onMouseEnter={() => setHoveredId(b.id)}
+                onMouseLeave={() => setHoveredId(null)}
+                onFocus={() => setHoveredId(b.id)}
+                onBlur={() => setHoveredId(null)}
+                onClick={() => onOpen(b.id)}
+                aria-label={`Open ${b.name} details`}
                 initial={{ opacity: 0, scale: 0.95 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true, margin: "-100px" }}
@@ -327,12 +367,13 @@ function EcosystemVisual({
                   ease: [0.22, 1, 0.36, 1],
                 }}
                 className={cn(
-                  "absolute z-30 min-w-[230px] text-left rounded-[18px] backdrop-blur-md px-6 py-5 border transition-all duration-500 cursor-pointer",
+                  "absolute z-30 text-left rounded-[18px] backdrop-blur-md px-6 py-5 border transition-all duration-500 cursor-pointer",
                   "hover:-translate-y-[2px]"
                 )}
                 style={{
-                  left: `${(pos.x / 1200) * 100}%`,
-                  top: `${(pos.y / 620) * 100}%`,
+                  width: CARD_HALF_W * 2, // exact match with line-stop calculation
+                  left: `${(pos.x / VB_W) * 100}%`,
+                  top: `${(pos.y / VB_H) * 100}%`,
                   transform: "translate(-50%, -50%)",
                   borderColor: isActive
                     ? "rgba(184,58,58,0.55)"
@@ -357,7 +398,7 @@ function EcosystemVisual({
         </div>
       </div>
 
-      {/* ===== Mobile vertical hub ===== */}
+      {/* ===== Mobile — vertical stack ===== */}
       <div className="md:hidden">
         <div
           className="relative w-full rounded-[24px] border border-white/[0.08] overflow-hidden px-6 py-12"
@@ -370,7 +411,7 @@ function EcosystemVisual({
           <div className="flex flex-col items-center">
             <div
               className="relative w-[140px] h-[140px] rounded-full overflow-hidden border bg-[#111111] shadow-[0_20px_60px_-20px_rgba(0,0,0,0.85)]"
-              style={{ borderColor: "rgba(184,58,58,0.40)" }}
+              style={{ borderColor: "rgba(184,58,58,0.38)" }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -396,7 +437,7 @@ function EcosystemVisual({
             </div>
           </div>
 
-          {/* Connector line */}
+          {/* Connector */}
           <div
             aria-hidden
             className="mx-auto mt-8 mb-2 w-px h-10"
@@ -406,40 +447,118 @@ function EcosystemVisual({
             }}
           />
 
-          {/* Stacked node buttons — tap to swap detail panel */}
+          {/* Tap-to-open node buttons */}
           <div className="space-y-3">
-            {BEDRIJVEN.map((b) => {
-              const isActive = selectedId === b.id;
-              return (
-                <button
-                  key={b.id}
-                  type="button"
-                  onClick={() => setSelectedId(b.id)}
-                  aria-pressed={isActive}
-                  className={cn(
-                    "block w-full text-left rounded-[16px] border px-5 py-4 transition-all duration-300"
-                  )}
-                  style={{
-                    borderColor: isActive
-                      ? "rgba(184,58,58,0.55)"
-                      : "rgba(255,255,255,0.10)",
-                    backgroundColor: isActive
-                      ? "rgba(17,17,17,0.95)"
-                      : "rgba(17,17,17,0.82)",
-                  }}
-                >
-                  <div className="font-serif text-foreground text-[18px] leading-tight">
-                    {b.name}
-                  </div>
-                  <div className="mt-1.5 text-[10px] tracking-[0.32em] uppercase font-medium text-accent">
-                    {b.label}
-                  </div>
-                </button>
-              );
-            })}
+            {BEDRIJVEN.map((b) => (
+              <button
+                key={b.id}
+                type="button"
+                onClick={() => onOpen(b.id)}
+                aria-label={`Open ${b.name} details`}
+                className="block w-full text-left rounded-[16px] border border-white/[0.10] bg-[rgba(17,17,17,0.82)] px-5 py-4 transition-all duration-300 active:bg-[rgba(17,17,17,0.95)] active:border-[rgba(184,58,58,0.55)]"
+              >
+                <div className="font-serif text-foreground text-[18px] leading-tight">
+                  {b.name}
+                </div>
+                <div className="mt-1.5 text-[10px] tracking-[0.32em] uppercase font-medium text-accent">
+                  {b.label}
+                </div>
+              </button>
+            ))}
           </div>
         </div>
       </div>
     </>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Modal — opens when a brand is clicked                                      */
+/* -------------------------------------------------------------------------- */
+
+function BedrijfModal({
+  bedrijf,
+  onClose,
+}: {
+  bedrijf: Bedrijf;
+  onClose: () => void;
+}) {
+  return (
+    <motion.div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="bedrijf-modal-title"
+      className="fixed inset-0 z-[200] flex items-center justify-center px-5 py-10"
+    >
+      {/* Backdrop */}
+      <motion.button
+        type="button"
+        aria-label="Sluiten"
+        onClick={onClose}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+        className="absolute inset-0 bg-background/72"
+        style={{
+          backdropFilter: "blur(18px)",
+          WebkitBackdropFilter: "blur(18px)",
+        }}
+      />
+
+      {/* Card */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.94, y: 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 8 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        className="relative z-10 w-full max-w-[520px] rounded-[24px] border border-white/[0.10] bg-[#0d0d0d] px-7 py-9 md:px-9 md:py-11 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.9)]"
+        style={{
+          boxShadow:
+            "0 40px 100px -20px rgba(0,0,0,0.9), 0 0 0 1px rgba(184,58,58,0.10)",
+        }}
+      >
+        {/* Close button */}
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Sluit"
+          className="absolute top-5 right-5 flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.10] text-foreground/70 hover:text-foreground hover:border-white/[0.20] transition-colors duration-300"
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        {/* Eyebrow */}
+        <div className="text-[10px] tracking-[0.32em] uppercase font-medium text-accent">
+          {bedrijf.label}
+        </div>
+
+        {/* Title */}
+        <h3
+          id="bedrijf-modal-title"
+          className="mt-4 font-serif text-foreground text-[28px] md:text-[34px] leading-[1.1] tracking-[-0.005em]"
+        >
+          {bedrijf.name}
+        </h3>
+
+        {/* Body */}
+        <p className="mt-6 text-[15px] md:text-[16px] leading-[1.7] text-muted-foreground">
+          {bedrijf.body}
+        </p>
+
+        {/* CTA */}
+        <div className="mt-8 pt-7 border-t border-white/[0.06]">
+          <a
+            href={bedrijf.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group inline-flex items-center gap-2 text-[13px] tracking-[0.005em] text-foreground/90 hover:text-accent transition-colors duration-300"
+          >
+            {bedrijf.cta}
+            <ArrowUpRight className="h-3.5 w-3.5 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform duration-500" />
+          </a>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }
