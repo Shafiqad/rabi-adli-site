@@ -9,11 +9,11 @@ import { Reveal } from "@/components/reveal";
 /* -------------------------------------------------------------------------- */
 /*  Bedrijven — Rabi Adli ecosystem hub                                        */
 /*                                                                            */
-/*  Premium dark ecosystem map: Rabi centred, 4 brand cards on the corners,    */
-/*  thin oxblood lines that anchor on tiny connector-dots on each card. Cards   */
-/*  never resize on click — selection only toggles colours and an active line. */
-/*  All long-form content lives in a separate detail panel directly below the  */
-/*  visual so nothing can ever clip or glitch out of the container.           */
+/*  Stripped to the essentials so nothing can glitch:                          */
+/*  - Plain <button> nodes at fixed positions, fixed size, click only changes  */
+/*    border/dot/line colour. No size change, no transform animation.          */
+/*  - SVG lines computed once on container resize and rendered statically.     */
+/*  - Detail panel sits below the map; brand content crossfades cleanly.       */
 /* -------------------------------------------------------------------------- */
 
 interface Bedrijf {
@@ -64,20 +64,16 @@ const BEDRIJVEN: Bedrijf[] = [
   },
 ];
 
-/* -------------------------------------------------------------------------- */
-/*  Layout constants                                                           */
-/* -------------------------------------------------------------------------- */
-
 interface NodeSpec {
   id: string;
   xPct: number;
   yPct: number;
-  /** Side of the card the connector dot lives on (the side closest to the hub). */
+  /** Side of the card the connector dot lives on (closer to the hub). */
   side: "right" | "left";
 }
 
 const NODES: NodeSpec[] = [
-  { id: "vosgoldberg", xPct: 18, yPct: 24, side: "right" }, // top-left card → dot on right
+  { id: "vosgoldberg", xPct: 18, yPct: 24, side: "right" },
   { id: "compound-quadrant", xPct: 82, yPct: 24, side: "left" },
   { id: "geldinstituut", xPct: 18, yPct: 70, side: "right" },
   { id: "moneyfesto", xPct: 82, yPct: 70, side: "left" },
@@ -90,7 +86,7 @@ const HUB_RADIUS = HUB_DIAMETER / 2;
 
 const CARD_WIDTH = 300;
 const DOT_SIZE = 10;
-const DOT_GAP = 8; // distance between card edge and dot centre
+const DOT_GAP = 8;
 
 const LINE_SOFT = "rgba(190,55,55,0.45)";
 const LINE_ACTIVE = "rgba(220,70,70,0.85)";
@@ -141,19 +137,15 @@ export function Bedrijven() {
           </Reveal>
         </div>
 
-        {/* ----- Desktop ecosystem map ----- */}
-        <Reveal delay={120}>
-          <div className="hidden md:block">
-            <DesktopMap activeId={activeId} setActiveId={setActiveId} />
-          </div>
-        </Reveal>
+        {/* ----- Desktop map ----- */}
+        <div className="hidden md:block">
+          <DesktopMap activeId={activeId} setActiveId={setActiveId} />
+        </div>
 
         {/* ----- Mobile stack ----- */}
-        <Reveal delay={120}>
-          <div className="md:hidden">
-            <MobileStack activeId={activeId} setActiveId={setActiveId} />
-          </div>
-        </Reveal>
+        <div className="md:hidden">
+          <MobileStack activeId={activeId} setActiveId={setActiveId} />
+        </div>
 
         {/* ----- Detail panel (desktop) ----- */}
         <div className="hidden md:block">
@@ -165,7 +157,7 @@ export function Bedrijven() {
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Desktop map — Rabi centre + 4 nodes + SVG lines                            */
+/*  Desktop map                                                                */
 /* -------------------------------------------------------------------------- */
 
 function DesktopMap({
@@ -181,9 +173,7 @@ function DesktopMap({
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const measure = () => {
-      setSize({ w: el.offsetWidth, h: el.offsetHeight });
-    };
+    const measure = () => setSize({ w: el.offsetWidth, h: el.offsetHeight });
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
@@ -192,6 +182,7 @@ function DesktopMap({
 
   const hubCx = (size.w * HUB_X_PCT) / 100;
   const hubCy = (size.h * HUB_Y_PCT) / 100;
+  const circleScale = Math.min(size.w / 1280, size.h / 720) || 1;
 
   return (
     <div
@@ -204,7 +195,7 @@ function DesktopMap({
           "radial-gradient(60% 60% at 50% 45%, rgba(184,58,58,0.06), transparent 65%), #050505",
       }}
     >
-      {/* Concentric guide circles around Rabi */}
+      {/* Concentric guide circles */}
       {size.w > 0 && (
         <svg
           className="absolute inset-0 pointer-events-none"
@@ -217,7 +208,7 @@ function DesktopMap({
               key={r}
               cx={hubCx}
               cy={hubCy}
-              r={r * Math.min(size.w / 1280, size.h / 720)}
+              r={r * circleScale}
               fill="none"
               stroke="rgba(255,255,255,0.035)"
               strokeWidth={1}
@@ -236,7 +227,7 @@ function DesktopMap({
         }}
       />
 
-      {/* Connection lines — from photo edge to each connector dot */}
+      {/* Connection lines */}
       {size.w > 0 && (
         <svg
           className="absolute inset-0 pointer-events-none"
@@ -245,7 +236,7 @@ function DesktopMap({
           aria-hidden
           style={{ zIndex: 2 }}
         >
-          {NODES.map((node, i) => {
+          {NODES.map((node) => {
             const cardCx = (size.w * node.xPct) / 100;
             const cardCy = (size.h * node.yPct) / 100;
             const dotCx =
@@ -265,22 +256,15 @@ function DesktopMap({
 
             const isActive = activeId === node.id;
             return (
-              <motion.path
+              <line
                 key={node.id}
-                d={`M ${startX} ${startY} L ${dotCx} ${dotCy}`}
-                fill="none"
+                x1={startX}
+                y1={startY}
+                x2={dotCx}
+                y2={dotCy}
                 stroke={isActive ? LINE_ACTIVE : LINE_SOFT}
                 strokeWidth={isActive ? 1.3 : 1}
                 strokeLinecap="round"
-                initial={{ pathLength: 0, opacity: 0 }}
-                whileInView={{ pathLength: 1, opacity: 1 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{
-                  duration: 0.95,
-                  ease: [0.22, 1, 0.36, 1],
-                  delay: 0.45 + i * 0.08,
-                  opacity: { duration: 0.3, delay: 0.45 + i * 0.08 },
-                }}
                 style={{
                   transition:
                     "stroke 300ms ease, stroke-width 300ms ease",
@@ -300,18 +284,15 @@ function DesktopMap({
           transform: "translate(-50%, -50%)",
         }}
       >
-        <motion.div
-          initial={{ opacity: 0, scale: 0.92 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="relative rounded-full overflow-hidden border bg-[#111111] transition-all duration-500"
+        <div
+          className="relative rounded-full overflow-hidden border bg-[#111111]"
           style={{
             width: HUB_DIAMETER,
             height: HUB_DIAMETER,
             borderColor: activeId ? ACTIVE_BORDER : "rgba(184,58,58,0.45)",
             boxShadow:
               "0 30px 80px -20px rgba(0,0,0,0.85), 0 0 0 6px rgba(184,58,58,0.06)",
+            transition: "border-color 300ms ease",
           }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -328,43 +309,29 @@ function DesktopMap({
               }
             }}
           />
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.6, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
-          className="mt-6 text-center"
-        >
+        </div>
+        <div className="mt-6 text-center">
           <div className="font-serif text-foreground text-[22px] leading-none">
             Rabi Adli
           </div>
           <div className="mt-2 text-[10px] tracking-[0.32em] uppercase text-muted-foreground">
             Founder · Ecosystem
           </div>
-        </motion.div>
+        </div>
       </div>
 
-      {/* Brand nodes — fixed size, clicks only change active state */}
-      {NODES.map((node, i) => {
+      {/* Brand nodes */}
+      {NODES.map((node) => {
         const bedrijf = BEDRIJVEN.find((b) => b.id === node.id)!;
         const isActive = activeId === node.id;
         return (
-          <motion.button
+          <button
             key={node.id}
             type="button"
-            onClick={() =>
-              setActiveId(isActive ? null : node.id)
-            }
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{
-              duration: 0.55,
-              delay: 0.6 + i * 0.08,
-              ease: [0.22, 1, 0.36, 1],
-            }}
-            className="group absolute z-[4] text-left rounded-[24px] border outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 cursor-pointer transition-[border-color,box-shadow,transform] duration-300"
+            onClick={() => setActiveId(isActive ? null : node.id)}
+            aria-pressed={isActive}
+            aria-label={`Selecteer ${bedrijf.name}`}
+            className="absolute z-[4] text-left rounded-[24px] border outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 cursor-pointer"
             style={{
               width: CARD_WIDTH,
               minHeight: 120,
@@ -378,23 +345,15 @@ function DesktopMap({
                 : "rgba(255,255,255,0.10)",
               boxShadow: isActive
                 ? "0 0 40px rgba(220,70,70,0.10), 0 30px 60px -25px rgba(0,0,0,0.85)"
-                : "0 20px 40px -25px rgba(0,0,0,0.70)",
-            }}
-            aria-pressed={isActive}
-            aria-label={`Selecteer ${bedrijf.name}`}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.transform =
-                "translate(-50%, calc(-50% - 4px))";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.transform =
-                "translate(-50%, -50%)";
+                : "0 20px 40px -25px rgba(0,0,0,0.7)",
+              transition:
+                "border-color 300ms ease, box-shadow 300ms ease",
             }}
           >
-            {/* Connector dot — visual terminus of the SVG line */}
+            {/* Connector dot */}
             <span
               aria-hidden
-              className="absolute rounded-full border transition-colors duration-300"
+              className="absolute rounded-full border"
               style={{
                 width: DOT_SIZE,
                 height: DOT_SIZE,
@@ -410,26 +369,29 @@ function DesktopMap({
                 borderColor: isActive
                   ? "rgba(220,70,70,0.95)"
                   : LINE_SOFT,
+                transition:
+                  "background-color 300ms ease, border-color 300ms ease",
               }}
             />
 
             <div
               className="font-serif leading-tight"
-              style={{ color: "#F5F5F0", fontSize: "28px" }}
+              style={{ color: "#F5F5F0", fontSize: 28 }}
             >
               {bedrijf.name}
             </div>
             <div
-              className="mt-2 text-[12px] tracking-[0.28em] uppercase font-medium transition-colors duration-300"
+              className="mt-2 text-[12px] tracking-[0.28em] uppercase font-medium"
               style={{
                 color: isActive
                   ? "rgba(220,70,70,0.95)"
                   : "rgba(220,70,70,0.75)",
+                transition: "color 300ms ease",
               }}
             >
               {bedrijf.label}
             </div>
-          </motion.button>
+          </button>
         );
       })}
     </div>
@@ -437,7 +399,7 @@ function DesktopMap({
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Detail panel — sits below the desktop map                                  */
+/*  Detail panel                                                               */
 /* -------------------------------------------------------------------------- */
 
 function DetailPanel({ active }: { active: Bedrijf | null }) {
@@ -457,10 +419,10 @@ function DetailPanel({ active }: { active: Bedrijf | null }) {
         {active ? (
           <motion.div
             key={active.id}
-            initial={{ opacity: 0, y: 14 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
           >
             <div className="text-[11px] tracking-[0.32em] uppercase font-medium text-accent">
               {active.label}
@@ -501,7 +463,7 @@ function DetailPanel({ active }: { active: Bedrijf | null }) {
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Mobile stack — photo top, 4 cards stacked, inline detail per card          */
+/*  Mobile stack                                                               */
 /* -------------------------------------------------------------------------- */
 
 function MobileStack({
@@ -519,7 +481,6 @@ function MobileStack({
           "radial-gradient(60% 50% at 50% 22%, rgba(184,58,58,0.08), transparent 65%), #050505",
       }}
     >
-      {/* Photo */}
       <div className="flex flex-col items-center">
         <div
           className="relative w-[150px] h-[150px] rounded-full overflow-hidden border bg-[#111111] shadow-[0_20px_60px_-20px_rgba(0,0,0,0.85)]"
@@ -549,7 +510,6 @@ function MobileStack({
         </div>
       </div>
 
-      {/* Vertical connector */}
       <div
         aria-hidden
         className="mx-auto mt-8 mb-3 w-px h-10"
@@ -559,14 +519,13 @@ function MobileStack({
         }}
       />
 
-      {/* Stacked cards with inline detail */}
       <div className="space-y-3">
         {BEDRIJVEN.map((b) => {
           const isActive = activeId === b.id;
           return (
             <div
               key={b.id}
-              className="rounded-[18px] border overflow-hidden transition-[border-color,background-color] duration-300"
+              className="rounded-[18px] border overflow-hidden"
               style={{
                 borderColor: isActive
                   ? ACTIVE_BORDER
@@ -574,6 +533,8 @@ function MobileStack({
                 backgroundColor: isActive
                   ? "rgba(13,13,13,0.97)"
                   : "rgba(17,17,17,0.82)",
+                transition:
+                  "border-color 250ms ease, background-color 250ms ease",
               }}
             >
               <button
@@ -591,6 +552,7 @@ function MobileStack({
                     color: isActive
                       ? "rgba(220,70,70,0.95)"
                       : "rgba(220,70,70,0.75)",
+                    transition: "color 300ms ease",
                   }}
                 >
                   {b.label}
@@ -599,10 +561,12 @@ function MobileStack({
 
               <div
                 aria-hidden={!isActive}
-                className="overflow-hidden transition-[max-height,opacity] duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
+                className="overflow-hidden"
                 style={{
                   maxHeight: isActive ? 600 : 0,
                   opacity: isActive ? 1 : 0,
+                  transition:
+                    "max-height 400ms cubic-bezier(0.22,1,0.36,1), opacity 300ms ease",
                 }}
               >
                 <div className="px-5 pb-5 pt-1">
