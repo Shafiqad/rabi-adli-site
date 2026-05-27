@@ -2,18 +2,16 @@
 
 import * as React from "react";
 import { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, X } from "lucide-react";
 import { Reveal } from "@/components/reveal";
 
 /* -------------------------------------------------------------------------- */
 /*  Bedrijven — Rabi Adli ecosystem hub                                        */
 /*                                                                            */
-/*  Stripped to the essentials so nothing can glitch:                          */
-/*  - Plain <button> nodes at fixed positions, fixed size, click only changes  */
-/*    border/dot/line colour. No size change, no transform animation.          */
-/*  - SVG lines computed once on container resize and rendered statically.     */
-/*  - Detail panel sits below the map; brand content crossfades cleanly.       */
+/*  Stable hub-and-spoke map. Cards are plain divs at fixed positions; click   */
+/*  expands the card in-place to reveal body + CTA. A per-card ResizeObserver  */
+/*  feeds the live width/height back to the line calculator so the connector   */
+/*  lines stay perfectly anchored to the dot as the card grows.               */
 /* -------------------------------------------------------------------------- */
 
 interface Bedrijf {
@@ -84,7 +82,8 @@ const HUB_Y_PCT = 45;
 const HUB_DIAMETER = 210;
 const HUB_RADIUS = HUB_DIAMETER / 2;
 
-const CARD_WIDTH = 300;
+const CARD_W_COLLAPSED = 300;
+const CARD_W_EXPANDED = 360;
 const DOT_SIZE = 10;
 const DOT_GAP = 8;
 
@@ -101,9 +100,6 @@ const NOISE_URL =
 
 export function Bedrijven() {
   const [activeId, setActiveId] = useState<string | null>(null);
-  const active = activeId
-    ? BEDRIJVEN.find((b) => b.id === activeId) ?? null
-    : null;
 
   return (
     <section
@@ -147,9 +143,8 @@ export function Bedrijven() {
           <MobileStack activeId={activeId} setActiveId={setActiveId} />
         </div>
 
-        {/* ----- Detail panel (desktop) ----- */}
-        <div className="hidden md:block">
-          <DetailPanel active={active} />
+        <div className="hidden md:block mt-10 text-center text-[11px] tracking-[0.32em] uppercase text-subtle-foreground">
+          Klik een bedrijf om de uitleg te openen
         </div>
       </div>
     </section>
@@ -160,6 +155,11 @@ export function Bedrijven() {
 /*  Desktop map                                                                */
 /* -------------------------------------------------------------------------- */
 
+interface CardSize {
+  w: number;
+  h: number;
+}
+
 function DesktopMap({
   activeId,
   setActiveId,
@@ -168,8 +168,11 @@ function DesktopMap({
   setActiveId: (id: string | null) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [size, setSize] = useState({ w: 0, h: 0 });
+  const [cardSizes, setCardSizes] = useState<Record<string, CardSize>>({});
 
+  // Track container size.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -178,6 +181,29 @@ function DesktopMap({
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
+  }, []);
+
+  // Track each card's live size so lines follow the expansion smoothly.
+  useEffect(() => {
+    const observers: ResizeObserver[] = [];
+    BEDRIJVEN.forEach((b) => {
+      const el = cardRefs.current[b.id];
+      if (!el) return;
+      const ro = new ResizeObserver(() => {
+        const w = el.offsetWidth;
+        const h = el.offsetHeight;
+        setCardSizes((prev) => {
+          const cur = prev[b.id];
+          if (cur && Math.abs(cur.w - w) < 0.5 && Math.abs(cur.h - h) < 0.5) {
+            return prev;
+          }
+          return { ...prev, [b.id]: { w, h } };
+        });
+      });
+      ro.observe(el);
+      observers.push(ro);
+    });
+    return () => observers.forEach((r) => r.disconnect());
   }, []);
 
   const hubCx = (size.w * HUB_X_PCT) / 100;
@@ -227,7 +253,7 @@ function DesktopMap({
         }}
       />
 
-      {/* Connection lines */}
+      {/* Connection lines — endpoint follows measured card width */}
       {size.w > 0 && (
         <svg
           className="absolute inset-0 pointer-events-none"
@@ -239,10 +265,12 @@ function DesktopMap({
           {NODES.map((node) => {
             const cardCx = (size.w * node.xPct) / 100;
             const cardCy = (size.h * node.yPct) / 100;
+            const measured = cardSizes[node.id];
+            const cardW = measured ? measured.w : CARD_W_COLLAPSED;
             const dotCx =
               node.side === "right"
-                ? cardCx + CARD_WIDTH / 2 + DOT_GAP
-                : cardCx - CARD_WIDTH / 2 - DOT_GAP;
+                ? cardCx + cardW / 2 + DOT_GAP
+                : cardCx - cardW / 2 - DOT_GAP;
             const dotCy = cardCy;
 
             const dx = dotCx - hubCx;
@@ -320,34 +348,47 @@ function DesktopMap({
         </div>
       </div>
 
-      {/* Brand nodes */}
+      {/* Brand cards — click expands in-place */}
       {NODES.map((node) => {
         const bedrijf = BEDRIJVEN.find((b) => b.id === node.id)!;
         const isActive = activeId === node.id;
         return (
-          <button
+          <div
             key={node.id}
-            type="button"
-            onClick={() => setActiveId(isActive ? null : node.id)}
+            ref={(el) => {
+              cardRefs.current[node.id] = el;
+            }}
+            className="absolute rounded-[24px] border outline-none cursor-pointer"
+            role="button"
+            tabIndex={0}
             aria-pressed={isActive}
             aria-label={`Selecteer ${bedrijf.name}`}
-            className="absolute z-[4] text-left rounded-[24px] border outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 cursor-pointer"
+            onClick={() =>
+              setActiveId(isActive ? null : node.id)
+            }
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setActiveId(isActive ? null : node.id);
+              }
+            }}
             style={{
-              width: CARD_WIDTH,
-              minHeight: 120,
-              padding: "26px 30px",
+              width: isActive ? CARD_W_EXPANDED : CARD_W_COLLAPSED,
               left: `${node.xPct}%`,
               top: `${node.yPct}%`,
               transform: "translate(-50%, -50%)",
-              backgroundColor: "rgba(14,14,14,0.92)",
+              backgroundColor: isActive
+                ? "rgba(11,11,11,0.97)"
+                : "rgba(14,14,14,0.92)",
               borderColor: isActive
                 ? ACTIVE_BORDER
                 : "rgba(255,255,255,0.10)",
               boxShadow: isActive
-                ? "0 0 40px rgba(220,70,70,0.10), 0 30px 60px -25px rgba(0,0,0,0.85)"
+                ? "0 0 40px rgba(220,70,70,0.10), 0 40px 80px -25px rgba(0,0,0,0.9)"
                 : "0 20px 40px -25px rgba(0,0,0,0.7)",
+              zIndex: isActive ? 50 : 4,
               transition:
-                "border-color 300ms ease, box-shadow 300ms ease",
+                "width 380ms cubic-bezier(0.22,1,0.36,1), background-color 300ms ease, border-color 300ms ease, box-shadow 300ms ease",
             }}
           >
             {/* Connector dot */}
@@ -374,90 +415,68 @@ function DesktopMap({
               }}
             />
 
-            <div
-              className="font-serif leading-tight"
-              style={{ color: "#F5F5F0", fontSize: 28 }}
-            >
-              {bedrijf.name}
+            {/* Header */}
+            <div className="px-[30px] pt-[26px] pb-[24px] flex items-start justify-between gap-3">
+              <div>
+                <div
+                  className="font-serif leading-tight"
+                  style={{ color: "#F5F5F0", fontSize: 28 }}
+                >
+                  {bedrijf.name}
+                </div>
+                <div
+                  className="mt-2 text-[12px] tracking-[0.28em] uppercase font-medium"
+                  style={{
+                    color: isActive
+                      ? "rgba(220,70,70,0.95)"
+                      : "rgba(220,70,70,0.75)",
+                    transition: "color 300ms ease",
+                  }}
+                >
+                  {bedrijf.label}
+                </div>
+              </div>
+              {isActive && (
+                <span
+                  aria-hidden
+                  className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/[0.10] text-foreground/60"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </span>
+              )}
             </div>
+
+            {/* Expandable body + CTA */}
             <div
-              className="mt-2 text-[12px] tracking-[0.28em] uppercase font-medium"
+              aria-hidden={!isActive}
+              className="overflow-hidden"
               style={{
-                color: isActive
-                  ? "rgba(220,70,70,0.95)"
-                  : "rgba(220,70,70,0.75)",
-                transition: "color 300ms ease",
+                maxHeight: isActive ? 500 : 0,
+                opacity: isActive ? 1 : 0,
+                transition:
+                  "max-height 420ms cubic-bezier(0.22,1,0.36,1), opacity 300ms ease",
               }}
             >
-              {bedrijf.label}
+              <div className="px-[30px] pb-[28px]">
+                <div className="h-px w-full bg-white/[0.06] mb-5" />
+                <p className="text-[14px] leading-[1.7] text-muted-foreground">
+                  {bedrijf.body}
+                </p>
+                <a
+                  href={bedrijf.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="group mt-6 inline-flex items-center gap-2 text-[12.5px] tracking-[0.005em] text-foreground/90 hover:text-accent transition-colors duration-300"
+                >
+                  {bedrijf.cta}
+                  <ArrowUpRight className="h-3.5 w-3.5 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform duration-500" />
+                </a>
+              </div>
             </div>
-          </button>
+          </div>
         );
       })}
-    </div>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/*  Detail panel                                                               */
-/* -------------------------------------------------------------------------- */
-
-function DetailPanel({ active }: { active: Bedrijf | null }) {
-  return (
-    <div
-      className="mx-auto mt-12 rounded-[24px]"
-      style={{
-        maxWidth: 900,
-        minHeight: 220,
-        padding: "32px 36px",
-        background: "rgba(10,10,10,0.88)",
-        border: "1px solid rgba(255,255,255,0.08)",
-        overflow: "hidden",
-      }}
-    >
-      <AnimatePresence mode="wait" initial={false}>
-        {active ? (
-          <motion.div
-            key={active.id}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <div className="text-[11px] tracking-[0.32em] uppercase font-medium text-accent">
-              {active.label}
-            </div>
-            <h3 className="mt-3 font-serif text-foreground text-[28px] md:text-[34px] leading-[1.1] tracking-[-0.005em]">
-              {active.name}
-            </h3>
-            <p className="mt-5 text-[15px] md:text-[16px] leading-[1.7] text-muted-foreground max-w-2xl">
-              {active.body}
-            </p>
-            <a
-              href={active.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group mt-7 inline-flex items-center gap-2 text-[13px] tracking-[0.005em] text-foreground/90 hover:text-accent transition-colors duration-300"
-            >
-              {active.cta}
-              <ArrowUpRight className="h-3.5 w-3.5 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform duration-500" />
-            </a>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="empty"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="flex items-center justify-center min-h-[156px]"
-          >
-            <p className="text-[12px] md:text-[13px] tracking-[0.28em] uppercase text-subtle-foreground">
-              Klik een bedrijf om meer te ontdekken.
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
@@ -543,19 +562,31 @@ function MobileStack({
                 aria-expanded={isActive}
                 className="block w-full text-left px-5 py-4 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
               >
-                <div className="font-serif text-foreground text-[19px] leading-tight">
-                  {b.name}
-                </div>
-                <div
-                  className="mt-1.5 text-[10px] tracking-[0.32em] uppercase font-medium"
-                  style={{
-                    color: isActive
-                      ? "rgba(220,70,70,0.95)"
-                      : "rgba(220,70,70,0.75)",
-                    transition: "color 300ms ease",
-                  }}
-                >
-                  {b.label}
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="font-serif text-foreground text-[19px] leading-tight">
+                      {b.name}
+                    </div>
+                    <div
+                      className="mt-1.5 text-[10px] tracking-[0.32em] uppercase font-medium"
+                      style={{
+                        color: isActive
+                          ? "rgba(220,70,70,0.95)"
+                          : "rgba(220,70,70,0.75)",
+                        transition: "color 300ms ease",
+                      }}
+                    >
+                      {b.label}
+                    </div>
+                  </div>
+                  {isActive && (
+                    <span
+                      aria-hidden
+                      className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/[0.10] text-foreground/60"
+                    >
+                      <X className="h-3 w-3" />
+                    </span>
+                  )}
                 </div>
               </button>
 
@@ -563,7 +594,7 @@ function MobileStack({
                 aria-hidden={!isActive}
                 className="overflow-hidden"
                 style={{
-                  maxHeight: isActive ? 600 : 0,
+                  maxHeight: isActive ? 500 : 0,
                   opacity: isActive ? 1 : 0,
                   transition:
                     "max-height 400ms cubic-bezier(0.22,1,0.36,1), opacity 300ms ease",
