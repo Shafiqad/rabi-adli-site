@@ -71,10 +71,10 @@ interface NodeSpec {
 }
 
 const NODES: NodeSpec[] = [
-  { id: "vosgoldberg", xPct: 18, yPct: 24, side: "right" },
-  { id: "compound-quadrant", xPct: 82, yPct: 24, side: "left" },
-  { id: "geldinstituut", xPct: 18, yPct: 70, side: "right" },
-  { id: "moneyfesto", xPct: 82, yPct: 70, side: "left" },
+  { id: "vosgoldberg", xPct: 15, yPct: 22, side: "right" },
+  { id: "compound-quadrant", xPct: 85, yPct: 22, side: "left" },
+  { id: "geldinstituut", xPct: 15, yPct: 72, side: "right" },
+  { id: "moneyfesto", xPct: 85, yPct: 72, side: "left" },
 ];
 
 const HUB_X_PCT = 50;
@@ -279,8 +279,8 @@ function DesktopMap({
             const ux = dx / len;
             const uy = dy / len;
 
-            const startX = hubCx + ux * (HUB_RADIUS + 2);
-            const startY = hubCy + uy * (HUB_RADIUS + 2);
+            const startX = hubCx + ux * HUB_RADIUS;
+            const startY = hubCy + uy * HUB_RADIUS;
 
             const isActive = activeId === node.id;
             return (
