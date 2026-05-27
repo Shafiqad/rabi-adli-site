@@ -461,13 +461,13 @@ function GalleryCard({ item, index }: { item: TimelineItem; index: number }) {
         }}
       />
 
-      {/* Bottom gradient for legibility */}
+      {/* Bottom darkening gradient — stronger so image text can't bleed through */}
       <div
         aria-hidden
-        className="absolute inset-x-0 bottom-0 h-[68%] pointer-events-none"
+        className="absolute inset-x-0 bottom-0 h-[78%] pointer-events-none"
         style={{
           background:
-            "linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.5) 35%, rgba(0,0,0,0.95) 100%)",
+            "linear-gradient(180deg, transparent 0%, rgba(5,5,5,0.78) 30%, rgba(5,5,5,1) 55%, rgba(5,5,5,1) 100%)",
         }}
       />
 
@@ -484,17 +484,19 @@ function GalleryCard({ item, index }: { item: TimelineItem; index: number }) {
       {/* Border */}
       <div className="absolute inset-0 rounded-[inherit] border border-white/[0.05] pointer-events-none" />
 
-      {/* Overlay text */}
-      <div className="absolute inset-0 p-7 flex flex-col justify-between">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] tracking-[0.32em] uppercase text-foreground/75">
-            {item.phase}
-          </span>
-          <span className="text-[10px] tracking-[0.32em] uppercase text-subtle-foreground">
-            {item.n}&nbsp;/&nbsp;{TOTAL}
-          </span>
-        </div>
+      {/* Top eyebrow row */}
+      <div className="absolute inset-x-0 top-0 p-7 flex items-center justify-between">
+        <span className="text-[10px] tracking-[0.32em] uppercase text-foreground/75">
+          {item.phase}
+        </span>
+        <span className="text-[10px] tracking-[0.32em] uppercase text-subtle-foreground">
+          {item.n}&nbsp;/&nbsp;{TOTAL}
+        </span>
+      </div>
 
+      {/* Bottom text block — sits on its own solid dark backdrop so the
+       * underlying timeline photo can never read through the type. */}
+      <div className="absolute inset-x-0 bottom-0 px-7 pt-8 pb-7 bg-[#050505]">
         <div className="max-w-lg">
           <h3 className="font-serif text-[28px] sm:text-[32px] leading-[1.06] tracking-[-0.005em] text-foreground">
             {item.title}
