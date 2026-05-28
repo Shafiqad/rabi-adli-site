@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="6" fill="#0D0D0D"/>
+  <text
+    x="13"
+    y="23"
+    font-family="'Playfair Display', Georgia, 'Times New Roman', serif"
+    font-size="22"
+    font-style="italic"
+    font-weight="500"
+    fill="#F5F5F0"
+    text-anchor="middle"
+  >R</text>
+  <circle cx="24" cy="22" r="1.6" fill="#B83A3A"/>
+</svg>
