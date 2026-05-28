@@ -52,14 +52,14 @@ const ARTICLES: NewsArticle[] = [
     image: "/images/media/gelderlander.jpg",
   },
   {
-    outlet: "Tubantia",
-    date: "2024",
-    kind: "Artikel",
-    title: "\"Je geeft je pinpas met je code en dan krijg je €1000\" — Rabi waarschuwt voor geldezel-gevaren.",
+    outlet: "NPO Radio 1",
+    date: "September 2024",
+    kind: "Radio",
+    title: "Rabi Adli over schijnzelfstandigheid vanaf 2025: \"Er is nog te veel onduidelijk.\"",
     excerpt:
-      "Dezelfde onderzoeksrapportage verscheen ook in Tubantia, waardoor Rabi's waarschuwing ook Oost-Nederland bereikte.",
-    href: "https://www.tubantia.nl/binnenland/je-geeft-je-pinpas-met-je-code-en-dan-krijg-je-1000-euro-rabi-waarschuwt-voor-geldezel-gevaren~a5d879dc/239741362/",
-    image: "/images/media/tubantia.jpg",
+      "Uitgenodigd als financieel expert in NPO Radio 1's nachtprogramma 'De Nacht is Zwart' om de aanpak van schijnzelfstandigheid en de gevolgen voor ondernemers te duiden.",
+    href: "https://www.nporadio1.nl/fragmenten/de-nacht-is-zwart/9d12b4fd-3b4a-4990-a3a0-3615c9dfd88f/2024-09-22-financieel-expert-rabi-adli-over-aanpak-schijnzelfstandigheid-vanaf-2025-er-is-nog-te-veel-onduidelijk",
+    image: "/images/media/npo-radio-1.png",
   },
 ];
 
