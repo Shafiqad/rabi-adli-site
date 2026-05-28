@@ -51,7 +51,6 @@ const FOOTER_SECTIONS: FooterSection[] = [
       { title: "Visie", href: "#reis" },
       { title: "Werk", href: "#bedrijven" },
       { title: "Media", href: "#media" },
-      { title: "Contact", href: "mailto:contact@rabiadli.nl" },
     ],
   },
   {
