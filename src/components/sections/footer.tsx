@@ -8,6 +8,26 @@ import { SignatureLogo } from "@/components/ui/signature-logo";
 import { SparklesCore } from "@/components/ui/sparkles";
 import { cn } from "@/lib/utils";
 
+/* TikTok icon — lucide-react doesn't ship one yet, so we inline a small SVG
+ * that follows the same stroke style as the other social icons. */
+function TikTokIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+    </svg>
+  );
+}
+
 /* -------------------------------------------------------------------------- */
 /*  Data                                                                       */
 /* -------------------------------------------------------------------------- */
@@ -46,9 +66,10 @@ const FOOTER_SECTIONS: FooterSection[] = [
   {
     label: "Volg",
     links: [
-      { title: "Instagram", href: "#", icon: Instagram },
-      { title: "LinkedIn", href: "#", icon: Linkedin },
-      { title: "YouTube", href: "#", icon: Youtube },
+      { title: "Instagram", href: "https://www.instagram.com/rabiadli/", icon: Instagram },
+      { title: "LinkedIn", href: "https://www.linkedin.com/in/rabiadli/", icon: Linkedin },
+      { title: "TikTok", href: "https://www.tiktok.com/@jegeldconsultant", icon: TikTokIcon },
+      { title: "YouTube", href: "https://www.youtube.com/@RabiAdli", icon: Youtube },
     ],
   },
   {
@@ -147,10 +168,14 @@ export function Footer() {
                 {section.label}
               </h3>
               <ul className="mt-5 space-y-3 text-sm text-muted-foreground">
-                {section.links.map((link) => (
+                {section.links.map((link) => {
+                  const isExternal = link.href.startsWith("http");
+                  return (
                   <li key={link.title}>
                     <a
                       href={link.href}
+                      target={isExternal ? "_blank" : undefined}
+                      rel={isExternal ? "noopener noreferrer" : undefined}
                       className="group inline-flex items-center gap-2 hover:text-foreground transition-colors duration-300"
                     >
                       {link.icon && (
@@ -162,7 +187,8 @@ export function Footer() {
                       </span>
                     </a>
                   </li>
-                ))}
+                  );
+                })}
               </ul>
             </AnimatedContainer>
           ))}

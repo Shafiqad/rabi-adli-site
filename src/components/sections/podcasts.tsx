@@ -137,7 +137,14 @@ export function Podcasts() {
                   offset={offset}
                   isActive={offset === 0}
                   index={i}
-                  onClick={() => setActive(i)}
+                  onClick={() => {
+                    if (offset === 0) {
+                      // Already centered — open the podcast.
+                      window.open(p.href, "_blank", "noopener,noreferrer");
+                    } else {
+                      setActive(i);
+                    }
+                  }}
                 />
               );
             })}
